@@ -1,8 +1,8 @@
-from Menu import render
+from Menu import start_game
 
 
 def main():
-    render()
+    start_game()
 
 
 if __name__ == '__main__':
