@@ -29,12 +29,12 @@ class MenuButton(object):
                 return True
         return False
 
-    def on_click(self):
+    def on_click(self) -> None:
         eval('self.func()')
 
-    def get_clicked(self, pos):
+    def get_clicked(self, pos) -> None:
         if self.is_clicked(pos):
             self.on_click()
 
-    def show(self, screen, color='#ffffff', weight=0):
+    def show(self, screen, color='#ffffff', weight=0) -> None:
         pygame.draw.rect(screen, color, (self.x, self.y, self.w, self.h), weight)
