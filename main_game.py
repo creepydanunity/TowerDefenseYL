@@ -36,7 +36,8 @@ class Board:
                     elif self.board[column + 1][row - 1] == 5:
                         continue
                     else:
-                        if self.board[column][row + 2] == 5 or self.board[column][row - 2] == 5 or \
+                        if self.board[column][row + 2] == 5 or \
+                                self.board[column][row - 2] == 5 or \
                                 self.board[column - 1][row - 2] == 5 or \
                                 self.board[column - 1][row + 2] == 5 or \
                                 self.board[column + 1][row - 2] == 5 or \
@@ -118,10 +119,10 @@ class Board:
                     space -= 1
                     swap_direction += 1
 
-                if current_pos[0] + direction_y < 0:
+                if current_pos[0] + direction_y < 1:
                     direction_y = 0
                     direction_x = 1
-                elif current_pos[0] + direction_y >= self.height:
+                elif current_pos[0] + direction_y >= self.height - 1:
                     direction_y = 0
                     direction_x = 1
 
@@ -134,11 +135,11 @@ class Board:
                     else:
                         cells += 1
 
-                if current_pos[0] == 0:
+                if current_pos[0] == 1:
                     if self.board[current_pos[0] + 1][current_pos[1] - 1] == 5:
                         direction_y = 0
                         direction_x = 1
-                elif current_pos[0] == self.height - 1:
+                elif current_pos[0] == self.height - 2:
                     if self.board[current_pos[0] - 1][current_pos[1] - 1] == 5:
                         direction_y = 0
                         direction_x = 1
