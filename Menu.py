@@ -83,8 +83,8 @@ class MenuList(list):
     def is_clicked(self, pos: tuple) -> list:
         """
         Проверяет выполнение всех кнопок
-        :param pos: Позиция курсора
-        :return: Возвращает список нажатых
+        :param pos: Позиция курсора в виде кортежа
+        :return: Возвращает список нажатых кнопок
         """
         lr = []
         for x in self.li:
