@@ -250,10 +250,11 @@ def start():
     def print_4():
         print(4)
 
-    btn1 = MenuButton(20, 20, 100, 50, func=print_1, color="#cc9900", text="1", text_color="#ff0000")
-    btn2 = MenuButton(20, 120, 100, 50, func=print_2, color="#cc9900", text="2", text_color="#00ff00")
-    btn3 = MenuButton(20, 220, 100, 50, func=print_3, color="#cc9900", text="3", text_color="#0000ff")
-    btn4 = MenuButton(20, 320, 100, 50, func=print_4, color="#cc9900", text="4")
+    k = 130
+    btn1 = MenuButton(0, 20, 50, 100, func=print_1, color="#cc9900", text="1", text_color="#ff0000")
+    btn2 = MenuButton(0, 20 + k, 50, 100, func=print_2, color="#cc9900", text="2", text_color="#00ff00")
+    btn3 = MenuButton(0, 20 + 2 * k, 50, 100, func=print_3, color="#cc9900", text="3", text_color="#0000ff")
+    btn4 = MenuButton(0, 20 + 3 * k, 50, 100, func=print_4, color="#cc9900", text="4")
     li = []
     for x in range(1, 5):
         eval(f'li.append(btn{x})')
