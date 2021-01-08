@@ -2,7 +2,7 @@ from random import randint
 
 import pygame
 
-from Menu import MenuButton, MenuList
+from Menu import MenuButton, MenuList, MenuLayOut
 from settings import get_resolution
 
 
@@ -250,15 +250,15 @@ def start():
     def print_4():
         print(4)
 
-    k = 130
-    btn1 = MenuButton(0, 20, 50, 100, func=print_1, color="#cc9900", text="1", text_color="#ff0000")
-    btn2 = MenuButton(0, 20 + k, 50, 100, func=print_2, color="#cc9900", text="2", text_color="#00ff00")
-    btn3 = MenuButton(0, 20 + 2 * k, 50, 100, func=print_3, color="#cc9900", text="3", text_color="#0000ff")
-    btn4 = MenuButton(0, 20 + 3 * k, 50, 100, func=print_4, color="#cc9900", text="4")
+    btn1 = MenuButton(0, 0, 0, 0, func=print_1, color="#cc9900", text="1", text_color="#ff0000")
+    btn2 = MenuButton(0, 0, 0, 0, func=print_2, color="#cc9900", text="2", text_color="#00ff00")
+    btn3 = MenuButton(0, 0, 0, 0, func=print_3, color="#cc9900", text="3", text_color="#0000ff")
+    btn4 = MenuButton(0, 0, 0, 0, func=print_4, color="#cc9900", text="4")
     li = []
     for x in range(1, 5):
         eval(f'li.append(btn{x})')
     btn = MenuList(li)
+    layout = MenuLayOut(btn, 0, 0, 60, 600, (5, 5), "#f0f000", 'v')
 
     while running:
         board_clear(screen)
@@ -271,7 +271,7 @@ def start():
 
         board_update(game_map, screen)
 
-        btn.show(screen)
+        layout.show(screen)
 
     pygame.quit()
 

@@ -44,6 +44,7 @@ class MenuButton(object):
         self.text = text
         self.text_color = text_color
         self.text_size = text_size
+        self.enabled = True
 
     def is_clicked(self, pos: tuple) -> bool:
         """
@@ -62,7 +63,8 @@ class MenuButton(object):
         """
         Выполняет функцию у кнопки
         """
-        eval('self.func()')
+        if self.enabled:
+            eval('self.func()')
 
     def get_clicked(self, pos: tuple) -> None:
         """
@@ -87,6 +89,14 @@ class MenuButton(object):
         text_y = self.y + (self.h - text_h) // 2
         pygame.draw.rect(screen, self.color, (self.x, self.y, self.w, self.h), self.weight)
         screen.blit(text, (text_x, text_y))
+
+    def set_enabled(self, b: bool) -> None:
+        """
+        Устанавливает состояние кнопки
+
+        :param b: True или False
+        """
+        self.enabled = b
 
 
 class MenuList(list):
@@ -141,3 +151,82 @@ class MenuList(list):
         """
         for x in self.li:
             x.show(screen)
+
+    def get_list(self) -> list:
+        """
+        Метод получение списка кнопок
+
+        :return: Список кнопок
+        """
+        return self.li
+
+
+class MenuLayOut(object):
+
+    def __init__(self, ml: MenuList, x: int, y: int, w: int, h: int, indent=(10, 10), color="#999999",
+                 orientation='v') -> None:
+        """
+        Элемент интерфейса, с помощью которого можно настраивать меню
+
+        :param ml: класс MenuList с кнопками
+        :param x: Координата x
+        :param y: Координата y
+        :param w: Ширина
+        :param h: Высота
+        :param indent: Отступ. Первый элемент - по x, второй - по y
+        :param color: Цвет
+        :param orientation: Ориентация v - вертикально, h - горизонтально
+        """
+        self.ml = ml
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.indent = indent
+        self.color = color
+        self.orientation = orientation
+
+        self.calculation()
+
+    def calculation(self) -> None:
+        """
+        Метод для расчет размеров
+        """
+        c = len(self.ml)
+        if self.orientation == 'v':
+            btn_w = self.w - self.indent[0] * 2
+            btn_h = self.h // c - self.indent[1] * 2
+            def btn_x(n):
+                return self.x + self.indent[0]
+            def btn_y(n):
+                return self.y + self.indent[1] * (2 * n + 1) + n * btn_h
+        elif self.orientation == 'h':
+            btn_h = self.h - self.indent[1] * 2
+            btn_w = self.w // c - self.indent[0] * 2
+            def btn_y(n):
+                return self.y + self.indent[1]
+            def btn_x(n):
+                return self.x + self.indent[0] * 2 * (n + 1) + n * btn_w
+        else:
+            raise ValueError
+        self.btn_w = btn_w
+        self.btn_h = btn_h
+        self.btn_x = btn_x
+        self.btn_y = btn_y
+
+        c = 0
+        for btn in self.ml.get_list():
+            btn.x = self.btn_x(c)
+            btn.y = self.btn_y(c)
+            btn.w = btn_w
+            btn.h = btn_h
+            c += 1
+
+    def show(self, screen) -> None:
+        """
+        Метод для отрисовки слоя и содержимого
+
+        :param screen: Холст
+        """
+        pygame.draw.rect(screen, self.color, (self.x, self.y, self.w, self.h), 0)
+        self.ml.show(screen)
