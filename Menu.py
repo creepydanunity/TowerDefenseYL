@@ -1,15 +1,15 @@
 import pygame.draw
 
-from main_game import start
+# from main_game import start
 
 
-def start_game():
-    start()
+# def start_game():
+#     start()
 
 
 class MenuButton(object):
 
-    def __init__(self, x, y, w, h, func=lambda x: x, color="#ffffff", weight=0) -> None:
+    def __init__(self, x: int, y: int, w: int, h: int, func=lambda: None, color="#ffffff", weight=0) -> None:
         """
         Инициализация кнопки
         :param x: Координата x
@@ -24,7 +24,7 @@ class MenuButton(object):
             raise ValueError
         if type(x) != int or type(y) != int or type(w) != int or type(h) != int or type(color) != str:
             raise TypeError
-        if type(func) != type(lambda x: x):
+        if type(func) != type(lambda: None):
             raise TypeError
         self.x = x
         self.y = y
