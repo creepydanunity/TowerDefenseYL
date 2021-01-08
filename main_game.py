@@ -284,14 +284,12 @@ class Board:
                 else:
                     space -= 1
                     swap_direction += 1
-
                 if current_pos[0] + direction_y < 1:
                     direction_y = 0
                     direction_x = 1
                 elif current_pos[0] + direction_y >= self.height - 1:
                     direction_y = 0
                     direction_x = 1
-
                 if current_pos[1] + direction_x >= self.width:
                     direction_x = 0
                     if current_pos[0] > finish_pos[0]:
@@ -300,7 +298,6 @@ class Board:
                         direction_y = 1
                     else:
                         cells += 1
-
                 if current_pos[0] == 1:
                     if self.board[current_pos[0] + 1][current_pos[1] - 1] == 5:
                         direction_y = 0
@@ -404,7 +401,7 @@ def start():
     game_map = Board(temporary_xy[0], temporary_xy[1])
     game_map.set_view(temporary_xy[0], temporary_xy[1])
     pygame.init()
-    screen = pygame.display.set_mode(get_resolution())
+    screen = pygame.display.set_mode(get_resolution(), pygame.FULLSCREEN)
     running = True
 
     while running:
