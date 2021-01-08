@@ -1,39 +1,48 @@
 import pygame
 from settings import get_resolution
 from random import randint
+import copy
 
 
 class Board:
+    """
+    :type Классическое клеточное игровое поле для TDшки.
+    """
+
     def __init__(self, width, height):
+        """
+        :param width: Ширина поля в клетках
+        :param height: Высота поля в клетках
+        """
         self.board = [[1] * width for _ in range(height)]
         self.width, self.height = width, height
         self.left, self.top, self.cell_size = None, None, None
+        self.size = width * height
         self.generate_way()
 
-    def generate_way(self, road_forks=1, base=1, spawn=1):
+    def generate_way(self, road_forks=1):
+        """
+        :param road_forks: Кол-во развилок. Высчитывается по известной лишь мне формуле.
+        :return: Занимается генерацией карты - self.board, ничего конкретного не возвращает.
+        """
         path_length = self.width * self.height // 5
 
-        def new_way(end_pos):
-            raiting_book = {}
-            for row in range(3, len(self.board) - 3):
-                for column in range(3, len(self.board[row]) - 2):
-                    if self.board[column][row] == 5:
-                        continue
-                    elif self.board[column - 1][row] == 5:
-                        continue
-                    elif self.board[column + 1][row] == 5:
-                        continue
-                    elif self.board[column][row + 1] == 5:
-                        continue
-                    elif self.board[column][row - 1] == 5:
-                        continue
-                    elif self.board[column - 1][row - 1] == 5:
-                        continue
-                    elif self.board[column - 1][row + 1] == 5:
-                        continue
-                    elif self.board[column + 1][row + 1] == 5:
-                        continue
-                    elif self.board[column + 1][row - 1] == 5:
+        def new_way():
+            # Сначала расставляет рейтинг клеток для создания развилки.
+            # Потом создаёт её на основе полученного рейтинга.
+            Rate_book = {}
+            point_coord = (0, 0)
+            for column in range(3, len(self.board) - 3):
+                for row in range(3, len(self.board[column]) - 2):
+                    if self.board[column][row] == 5 or \
+                            self.board[column - 1][row] == 5 or \
+                            self.board[column + 1][row] == 5 or \
+                            self.board[column][row + 1] == 5 or \
+                            self.board[column][row - 1] == 5 or \
+                            self.board[column - 1][row - 1] == 5 or \
+                            self.board[column - 1][row + 1] == 5 or \
+                            self.board[column + 1][row + 1] == 5 or \
+                            self.board[column + 1][row - 1] == 5:
                         continue
                     else:
                         if self.board[column][row + 2] == 5 or \
@@ -55,36 +64,193 @@ class Board:
                             continue
                         else:
                             near = False
-                        rait_counter = 0
-                        cells = 0
-                        for i in self.board[row]:
-                            if i == 5:
-                                rait_counter += 1
-                            cells += 1
-                        for i in range(len(self.board)):
-                            if self.board[column][i] == 5:
-                                rait_counter += 1
-                            cells += 1
-                        mediana = ((len(self.board)) // 2, len(self.board[0]) // 2)
-                        gip = (abs(mediana[0] - row) ** 2 + abs(mediana[1] - column) ** 2) ** 0.5
+                        cell_in_line_counter = 0
+                        for ii in self.board[row]:
+                            if ii == 5:
+                                cell_in_line_counter += 1
+                        for ii in range(len(self.board)):
+                            if self.board[ii][column] == 5:
+                                cell_in_line_counter += 1
+                        median = ((len(self.board)) // 2, len(self.board[0]) // 2)
+                        gip = (abs(median[0] - row) ** 2 + abs(median[1] - column) ** 2) ** 0.5
                         if gip == 0:
                             if near is False:
-                                raiting_book[(row, column)] = ((rait_counter / cells), near)
+                                Rate_book[(row, column)] = ((cell_in_line_counter / self.size), near)
                         else:
-                            raiting_book[(row, column)] = ((rait_counter / cells) / gip, near)
-            if len(raiting_book.keys()) / (self.width * self.height) > 0.1:
+                            Rate_book[(row, column)] = ((cell_in_line_counter / self.size) * gip, near)
+
+            if len(Rate_book.keys()) / (self.width * self.height) > 0.1 or len(Rate_book.keys()) == 0:
                 print('No')
                 self.generate_way()
             else:
-                for i in raiting_book.keys():
-                    row, col = i[0], i[1]
-                    if raiting_book[i][1] is False:
-                        self.board[col][row] = 3
+                temp_max_value = sorted(Rate_book.values(), reverse=True)[0]
+                for key, value in Rate_book.items():
+                    if value == temp_max_value:
+                        point_coord = key
+                        break
+                # self.board[point_coord[1]][point_coord[0]] = 22
+                minimum_distances = []
+                for row in range(0, len(self.board)):
+                    for column in range(3, point_coord[0] + 1):
+                        near_cell_way_counter = 0
+                        if self.board[row][column] == 5:
+                            to_right = False
+                            if self.board[row - 1][column] == 5 and self.board[row + 1][column] != 5:
+                                near_cell_way_counter += 1
+                            elif self.board[row + 1][column] == 5 and self.board[row - 1][column] != 5:
+                                near_cell_way_counter += 1
+                            if self.board[row][column + 1] == 5 and self.board[row][column - 1] != 5:
+                                near_cell_way_counter += 1
+                                to_right = True
+                            elif self.board[row][column - 1] == 5 and self.board[row][column + 1] != 5:
+                                near_cell_way_counter += 1
+                                to_right = True
+                            if near_cell_way_counter >= 2:
+                                # self.board[row][column] = 22
+                                go_up, go_down, go_left, go_right = False, False, False, False
+                                if to_right and self.board[row + 1][column] == 5:
+                                    if row < point_coord[1]:
+                                        continue
+                                    else:
+                                        go_up = True
+                                elif to_right and self.board[row - 1][column] == 5:
+                                    if row > point_coord[1]:
+                                        continue
+                                    else:
+                                        go_down = True
+                                elif self.board[row][column - 1] == 5:
+                                    go_right = True
+                                else:
+                                    go_right = True
+                                gip = (abs(point_coord[0] - column) ** 2 + abs(point_coord[1] - row) ** 2) ** 0.5
+                                if go_right:
+                                    minimum_distances.append([gip, [row, column], 'go_right'])
+                                elif go_down:
+                                    minimum_distances.append([gip, [row, column], 'go_down'])
+                                elif go_up:
+                                    minimum_distances.append([gip, [row, column], 'go_up'])
+                if minimum_distances:
+                    final_start_fork = []
+                    minimum_distances = sorted(minimum_distances, key=lambda x: x[0], reverse=True)
+                    print(minimum_distances)
+                    for minimum_distance in minimum_distances:
+                        passed_fork = True
+                        temp_distance = copy.deepcopy(minimum_distance)
+                        point_coord = (point_coord[1], point_coord[0])
+                        if minimum_distance[2] == 'go_right':
+                            while point_coord[1] > minimum_distance[1][1]:
+                                minimum_distance[1][1] += 1
+                                if minimum_distance[1] != point_coord:
+                                    if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
+                                        passed_fork = False
+                                        print(f'{temp_distance[1]} failed at {minimum_distance[1]}')
+                                        break
+                            if minimum_distance != point_coord:
+                                while point_coord[0] > minimum_distance[1][0]:
+                                    minimum_distance[1][0] += 1
+                                    if minimum_distance[1] != point_coord:
+                                        if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
+                                            print(f'{temp_distance[1]} failed at {minimum_distance[1]}')
+                                            passed_fork = False
+                                            break
+                                while point_coord[0] < minimum_distance[1][0]:
+                                    minimum_distance[1][0] -= 1
+                                    if minimum_distance[1] != point_coord:
+                                        if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
+                                            passed_fork = False
+                                            print(f'{temp_distance[1]} failed at {minimum_distance[1]}')
+                                            break
+                        elif minimum_distance[2] == 'go_down':
+                            while point_coord[0] > minimum_distance[1][0]:
+                                minimum_distance[1][0] += 1
+                                if minimum_distance[1] != point_coord:
+                                    if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
+                                        passed_fork = False
+                                        print(f'{temp_distance[1]} failed at {minimum_distance[1]}')
+                                        break
+                            if minimum_distance != point_coord:
+                                while point_coord[1] > minimum_distance[1][1]:
+                                    minimum_distance[1][1] += 1
+                                    if minimum_distance[1] != point_coord:
+                                        if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
+                                            passed_fork = False
+                                            print(f'{temp_distance[1]} failed at {minimum_distance[1]}')
+                                            break
+                        elif minimum_distance[2] == 'go_up':
+                            while point_coord[0] < minimum_distance[1][0]:
+                                minimum_distance[1][0] -= 1
+                                if minimum_distance[1] != point_coord:
+                                    if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
+                                        passed_fork = False
+                                        print(f'{temp_distance[1]} failed at {minimum_distance[1]}')
+                                        break
+                            if minimum_distance != point_coord:
+                                while point_coord[1] > minimum_distance[1][1]:
+                                    minimum_distance[1][1] += 1
+                                    if minimum_distance[1] != point_coord:
+                                        if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
+                                            passed_fork = False
+                                            print(f'{temp_distance[1]} failed at {minimum_distance[1]}')
+                                            break
+                        if passed_fork:
+                            final_start_fork = temp_distance
+                            print(final_start_fork)
+                            break
+                    if final_start_fork:
+                        # self.board[final_start_fork[1][0]][final_start_fork[1][1]] = 22
+                        minimum_distance = final_start_fork
+                        if minimum_distance[2] == 'go_right':
+                            while point_coord[1] > minimum_distance[1][1]:
+                                minimum_distance[1][1] += 1
+                                self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                            if minimum_distance != point_coord:
+                                while point_coord[0] > minimum_distance[1][0]:
+                                    minimum_distance[1][0] += 1
+                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                while point_coord[0] < minimum_distance[1][0]:
+                                    minimum_distance[1][0] -= 1
+                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                        elif minimum_distance[2] == 'go_down':
+                            while point_coord[0] > minimum_distance[1][0]:
+                                minimum_distance[1][0] += 1
+                                self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                            if minimum_distance != point_coord:
+                                while point_coord[1] > minimum_distance[1][1]:
+                                    minimum_distance[1][1] += 1
+                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                        elif minimum_distance[2] == 'go_up':
+                            while point_coord[0] < minimum_distance[1][0]:
+                                minimum_distance[1][0] -= 1
+                                self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                            while point_coord[1] < minimum_distance[1][1]:
+                                minimum_distance[1][1] -= 1
+                                self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                        temp, cell_found = minimum_distance[1][1] + 1, False
+                        while temp < self.width - 1:
+                            self.board[minimum_distance[1][0]][temp] = 5
+                            temp += 1
+                            if self.board[minimum_distance[1][0]][temp] == 5 or \
+                                    self.board[minimum_distance[1][0] - 1][temp] == 5 or \
+                                    self.board[minimum_distance[1][0] + 1][temp] == 5:
+                                cell_found = True
+                                break
+                        if not cell_found:
+                            if minimum_distance[1][0] > finish_pos[0]:
+                                while minimum_distance[1][0] != finish_pos[0]:
+                                    minimum_distance[1][0] -= 1
+                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                            else:
+                                while minimum_distance[1][0] != finish_pos[0]:
+                                    minimum_distance[1][0] += 1
+                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
                     else:
-                        self.board[col][row] = 2
-
+                        print('Re-generate')
+                        self.generate_way()
+                else:
+                    print('Re-generate')
+                    self.generate_way()
         while True:
-            fork, swap_direction, cells = 0, 0, 0
+            fork, swap_direction, cells, direction_x, direction_y, space = 0, 0, 0, 1, 0, 0
             self.board = [[1] * self.width for _ in range(self.height)]
             y = randint(3, self.height - 2)
             self.board[y][1] = 9
@@ -92,10 +258,6 @@ class Board:
             y = randint(2, self.height - 1)
             self.board[y][self.width - 2] = 8
             finish_pos = (y, self.width - 2)
-            direction_x = 1
-            direction_y = 0
-            space = 0
-
             while current_pos != finish_pos:
                 if space == 0:
                     if swap_direction > 1:
@@ -118,14 +280,12 @@ class Board:
                 else:
                     space -= 1
                     swap_direction += 1
-
                 if current_pos[0] + direction_y < 1:
                     direction_y = 0
                     direction_x = 1
                 elif current_pos[0] + direction_y >= self.height - 1:
                     direction_y = 0
                     direction_x = 1
-
                 if current_pos[1] + direction_x >= self.width:
                     direction_x = 0
                     if current_pos[0] > finish_pos[0]:
@@ -134,7 +294,6 @@ class Board:
                         direction_y = 1
                     else:
                         cells += 1
-
                 if current_pos[0] == 1:
                     if self.board[current_pos[0] + 1][current_pos[1] - 1] == 5:
                         direction_y = 0
@@ -158,13 +317,13 @@ class Board:
                     self.board[current_pos[0]][current_pos[1]] = 5
                 else:
                     break
-            if path_length - 7 <= cells <= path_length + 7:
+            if path_length - 5 <= cells * 1.15:
                 self.board[finish_pos[0]][finish_pos[1]] = 8
                 for j in range(road_forks):
-                    new_way(end_pos=finish_pos)
+                    new_way()
                 break
-        for i in self.board:
-            print(i)
+        # for i in self.board:
+            # print(i)
 
     def set_view(self, w2, h2):
         w, h = get_resolution()
@@ -189,6 +348,12 @@ class Board:
                                      (j * self.cell_size[0] + self.left,
                                       i * self.cell_size[1] + self.top,
                                       self.cell_size[0], self.cell_size[1]), self.board[i][j], 50)
+                elif self.board[i][j] == 99:
+                    pygame.draw.rect(screen,
+                                     (7, 204, 147),
+                                     (j * self.cell_size[0] + self.left,
+                                      i * self.cell_size[1] + self.top,
+                                      self.cell_size[0], self.cell_size[1]), self.board[i][j], 0)
                 elif self.board[i][j] == 8:
                     pygame.draw.rect(screen,
                                      (0, 255, 0),
@@ -232,7 +397,7 @@ def start():
     game_map = Board(temporary_xy[0], temporary_xy[1])
     game_map.set_view(temporary_xy[0], temporary_xy[1])
     pygame.init()
-    screen = pygame.display.set_mode(get_resolution())
+    screen = pygame.display.set_mode(get_resolution(), pygame.FULLSCREEN)
     running = True
     while running:
         for event in pygame.event.get():

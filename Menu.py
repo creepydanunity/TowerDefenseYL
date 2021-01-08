@@ -97,7 +97,7 @@ class MenuList(list):
         Выполняет встроенную функцию у всех кнопок из списка
         :param li: Список кнопок, которые надо нажать
         """
-        for x in li:
+        for x in li:    
             x.on_click()
 
     def get_clicked(self, pos: tuple) -> None:
