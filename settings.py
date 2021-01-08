@@ -1,3 +1,3 @@
 def get_resolution():
-    w, h = 1920, 1080
+    w, h = 800, 600
     return w, h
