@@ -250,15 +250,19 @@ def start():
     def print_4():
         print(4)
 
-    btn1 = MenuButton(0, 0, 0, 0, func=print_1, color="#cc9900", text="1", text_color="#ff0000")
-    btn2 = MenuButton(0, 0, 0, 0, func=print_2, color="#cc9900", text="2", text_color="#00ff00")
-    btn3 = MenuButton(0, 0, 0, 0, func=print_3, color="#cc9900", text="3", text_color="#0000ff")
-    btn4 = MenuButton(0, 0, 0, 0, func=print_4, color="#cc9900", text="4")
+    s = 15
+    btn1 = MenuButton(0, 0, 0, 0, func=print_1, color="#737373", text="Начать", text_color="#1a1a1a", text_size=s)
+    btn2 = MenuButton(0, 0, 0, 0, func=print_2, color="#737373", text="Заново", text_color="#1a1a1a", text_size=s)
+    btn3 = MenuButton(0, 0, 0, 0, func=print_3, color="#737373", text="Настройки", text_color="#1a1a1a", text_size=s)
+    btn4 = MenuButton(0, 0, 0, 0, func=print_4, color="#737373", text="Выйти", text_color="#1a1a1a", text_size=s)
+    btn5 = f'MenuButton(0, 0, 0, 0, func=print_4, color="#737373", text="*кнопка*", text_color="#1a1a1a", text_size={s})'
     li = []
     for x in range(1, 5):
         eval(f'li.append(btn{x})')
+    for x in range(5):
+        li.append(eval(btn5))
     btn = MenuList(li)
-    layout = MenuLayOut(btn, 0, 0, 60, 600, (5, 5), "#f0f000", 'v')
+    layout = MenuLayOut(btn, 0, 0, 60, 600, (5, 5), "#cccccc", 'v')
 
     while running:
         board_clear(screen)
