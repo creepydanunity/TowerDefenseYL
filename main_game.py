@@ -1,6 +1,9 @@
-import pygame
-from settings import get_resolution
 from random import randint
+
+import pygame
+
+from Menu import MenuButton, MenuList
+from settings import get_resolution
 
 
 class Board:
@@ -234,15 +237,48 @@ def start():
     pygame.init()
     screen = pygame.display.set_mode(get_resolution())
     running = True
+
+    def print_1():
+        print(1)
+
+    def print_2():
+        print(2)
+
+    def print_3():
+        print(3)
+
+    def print_4():
+        print(4)
+
+    btn1 = MenuButton(20, 20, 100, 50, func=print_1, color="#cc9900", text="1", text_color="#ff0000")
+    btn2 = MenuButton(20, 120, 100, 50, func=print_2, color="#cc9900", text="2", text_color="#00ff00")
+    btn3 = MenuButton(20, 220, 100, 50, func=print_3, color="#cc9900", text="3", text_color="#0000ff")
+    btn4 = MenuButton(20, 320, 100, 50, func=print_4, color="#cc9900", text="4")
+    li = []
+    for x in range(1, 5):
+        eval(f'li.append(btn{x})')
+    btn = MenuList(li)
+
     while running:
+        board_clear(screen)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                btn.get_clicked(event.pos)
+
         board_update(game_map, screen)
+
+        btn.show(screen)
+
     pygame.quit()
 
 
 def board_update(game_map, screen):
-    screen.fill((0, 0, 0))
     game_map.render(screen)
+
+
+def board_clear(screen):
     pygame.display.flip()
+    screen.fill((0, 0, 0))

@@ -1,4 +1,6 @@
 import pygame.draw
+import pygame.font
+
 
 # from main_game import start
 
@@ -9,9 +11,11 @@ import pygame.draw
 
 class MenuButton(object):
 
-    def __init__(self, x: int, y: int, w: int, h: int, func=lambda: None, color="#ffffff", weight=0) -> None:
+    def __init__(self, x: int, y: int, w: int, h: int, func=lambda: None, color="#ffffff", weight=0, text="",
+                 text_color="#000000", text_size=50) -> None:
         """
         Инициализация кнопки
+
         :param x: Координата x
         :param y: Координата y
         :param w: Ширина
@@ -19,10 +23,14 @@ class MenuButton(object):
         :param func: Функция, которую выполняет кнопка при нажатии
         :param color: Цвет кнопки
         :param weight: Ширина рамки при отрисовке
+        :param text: Текст на кнопке
+        :param text_color: Цвет текста на кнопке
+        :param text_size: Размер шрифта на кнопке
         """
         if x < 0 or y < 0 or w < 0 or h < 0:
             raise ValueError
-        if type(x) != int or type(y) != int or type(w) != int or type(h) != int or type(color) != str:
+        if type(x) != int or type(y) != int or type(w) != int or type(h) != int or type(color) != str \
+                or type(text_color) != str or type(text_size) != int or type(text) != str:
             raise TypeError
         if type(func) != type(lambda: None):
             raise TypeError
@@ -33,10 +41,14 @@ class MenuButton(object):
         self.func = func
         self.color = color
         self.weight = weight
+        self.text = text
+        self.text_color = text_color
+        self.text_size = text_size
 
     def is_clicked(self, pos: tuple) -> bool:
         """
         Проверка на нажатие кнопки
+
         :param pos: Кортеж из позиции курсора во время нажатия
         :return: Возвращает True или False в зависимости от результата
         """
@@ -55,6 +67,7 @@ class MenuButton(object):
     def get_clicked(self, pos: tuple) -> None:
         """
         Если была нажата кнопка, то выполняет её функцию
+
         :param pos: Позиция курсора в виде кортежа
         """
         if self.is_clicked(pos):
@@ -63,9 +76,17 @@ class MenuButton(object):
     def show(self, screen) -> None:
         """
         Выполняет отрисовку на холсте
+
         :param screen: pygame-холст
         """
+        font = pygame.font.Font(None, self.text_size)
+        text = font.render(self.text, True, self.text_color)
+        text_w = text.get_width()
+        text_h = text.get_height()
+        text_x = self.x + (self.w - text_w) // 2
+        text_y = self.y + (self.h - text_h) // 2
         pygame.draw.rect(screen, self.color, (self.x, self.y, self.w, self.h), self.weight)
+        screen.blit(text, (text_x, text_y))
 
 
 class MenuList(list):
@@ -73,6 +94,7 @@ class MenuList(list):
     def __init__(self, li=None) -> None:
         """
         Инициализация списка всех кнопок
+
         :param li: Классический список из уже существующих кнопок
         """
         if li is None:
@@ -83,6 +105,7 @@ class MenuList(list):
     def is_clicked(self, pos: tuple) -> list:
         """
         Проверяет выполнение всех кнопок
+
         :param pos: Позиция курсора в виде кортежа
         :return: Возвращает список нажатых кнопок
         """
@@ -95,6 +118,7 @@ class MenuList(list):
     def on_click(self, li: list) -> None:
         """
         Выполняет встроенную функцию у всех кнопок из списка
+
         :param li: Список кнопок, которые надо нажать
         """
         for x in li:
@@ -103,6 +127,7 @@ class MenuList(list):
     def get_clicked(self, pos: tuple) -> None:
         """
         Выполняет вызов функции у всех нажатых кнопок
+
         :param pos: Позиция курсора ввиде кортежа
         """
         li = self.is_clicked(pos)
@@ -111,6 +136,7 @@ class MenuList(list):
     def show(self, screen) -> None:
         """
         Выполняет отрисовку всех кнопок
+
         :param screen: pygame-холст
         """
         for x in self.li:
