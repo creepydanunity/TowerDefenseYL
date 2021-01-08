@@ -1,4 +1,4 @@
-from Menu import start_game
+from main_game import start as start_game
 
 
 def main():
