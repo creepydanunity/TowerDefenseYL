@@ -36,7 +36,7 @@ btn4 = MenuButton(0, 0, 0, 0, func=print_4, color=BUTTON_BACKGROUND_COLOR, text=
 btn5 = f'MenuButton(0, 0, 0, 0, func=print_4, color=BUTTON_BACKGROUND_COLOR, text="*кнопка*",' + \
        f' text_color=TEXT_COLOR, text_size={TEXT_SIZE})'
 
-lbl1 = MenuLabel(0, 0, 0, 0, color=LABEL_BACKGROUND_COLOR, text="какой-то\nтекст\nна пи сан", text_color='#1a1a1a',
+lbl1 = MenuLabel(0, 0, 0, 0, color=LABEL_BACKGROUND_COLOR, text="какой-то\nтекст\nна пи сан", text_color=TEXT_COLOR,
                  text_size=TEXT_SIZE,
                  indent=LABEL_INDENT)
 
