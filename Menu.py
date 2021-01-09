@@ -2,13 +2,6 @@ import pygame.draw
 import pygame.font
 
 
-# from main_game import start
-
-
-# def start_game():
-#     start()
-
-
 class MenuButton(object):
 
     def __init__(self, x: int, y: int, w: int, h: int, func=lambda: None, color="#ffffff", width=0, text="",
@@ -229,7 +222,10 @@ class MenuLabel(object):
 
         self.calculation()
 
-    def calculation(self):
+    def calculation(self) -> None:
+        """
+        Метод перерасчета Label'а
+        """
         self.li_msl = []
 
         count = len(self.text)
@@ -240,7 +236,7 @@ class MenuLabel(object):
             self.li_msl.append(msl)
             c += msl.h + self.indent
 
-    def show(self, screen):
+    def show(self, screen) -> None:
         """
         Метод отрисовки надписи
 
@@ -250,7 +246,12 @@ class MenuLabel(object):
         for msl in self.li_msl:
             msl.show(screen)
 
-    def set_text(self, text):
+    def set_text(self, text: str) -> None:
+        """
+        Метод для установки текста в надпись
+
+        :param text: Текст для установки
+        """
         self.text = text.split('\n')
         self.calculation()
 
