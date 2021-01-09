@@ -2,7 +2,7 @@ from random import randint
 
 import pygame
 
-from Menu import MenuButton, MenuList, MenuLayOut
+from menu_exemplars import layout, btn
 from settings import get_resolution
 
 
@@ -237,32 +237,6 @@ def start():
     pygame.init()
     screen = pygame.display.set_mode(get_resolution())
     running = True
-
-    def print_1():
-        print(1)
-
-    def print_2():
-        print(2)
-
-    def print_3():
-        print(3)
-
-    def print_4():
-        print(4)
-
-    s = 15
-    btn1 = MenuButton(0, 0, 0, 0, func=print_1, color="#737373", text="Начать", text_color="#1a1a1a", text_size=s)
-    btn2 = MenuButton(0, 0, 0, 0, func=print_2, color="#737373", text="Заново", text_color="#1a1a1a", text_size=s)
-    btn3 = MenuButton(0, 0, 0, 0, func=print_3, color="#737373", text="Настройки", text_color="#1a1a1a", text_size=s)
-    btn4 = MenuButton(0, 0, 0, 0, func=print_4, color="#737373", text="Выйти", text_color="#1a1a1a", text_size=s)
-    btn5 = f'MenuButton(0, 0, 0, 0, func=print_4, color="#737373", text="*кнопка*", text_color="#1a1a1a", text_size={s})'
-    li = []
-    for x in range(1, 5):
-        eval(f'li.append(btn{x})')
-    for x in range(5):
-        li.append(eval(btn5))
-    btn = MenuList(li)
-    layout = MenuLayOut(btn, 0, 0, 60, 600, (5, 5), "#cccccc", 'v')
 
     while running:
         board_clear(screen)
