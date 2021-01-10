@@ -2,7 +2,7 @@ from random import randint
 
 import pygame
 
-from menu_exemplars import layout, btn
+from menu_exemplars import layout, layout2, btn
 from settings import get_resolution
 
 
@@ -250,6 +250,7 @@ def start():
         board_update(game_map, screen)
 
         layout.show(screen)
+        layout2.show(screen)
 
     pygame.quit()
 

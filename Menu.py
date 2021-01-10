@@ -335,13 +335,13 @@ class MenuLayOut(object):
                 return self.y + self.indent[1] * (2 * n + 1) + n * btn_h
         elif self.orientation == 'h':
             btn_h = self.h - self.indent[1] * 2
-            btn_w = self.w // cb - self.indent[0] * 2
+            btn_w = self.w // (cb + cl) - self.indent[0] * 2
 
             def btn_y(n):
                 return self.y + self.indent[1]
 
             def btn_x(n):
-                return self.x + self.indent[0] * 2 * (n + 1) + n * btn_w
+                return self.x + self.indent[0] * (2 * n + 1) + n * btn_w
         else:
             raise ValueError
         lbl_w = btn_w
