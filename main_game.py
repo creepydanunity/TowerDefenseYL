@@ -1,4 +1,8 @@
+from random import randint
+
 import pygame
+
+from menu_exemplars import layout, layout2, btn
 from settings import get_resolution
 from random import randint
 import copy
@@ -280,12 +284,14 @@ class Board:
                 else:
                     space -= 1
                     swap_direction += 1
+
                 if current_pos[0] + direction_y < 1:
                     direction_y = 0
                     direction_x = 1
                 elif current_pos[0] + direction_y >= self.height - 1:
                     direction_y = 0
                     direction_x = 1
+
                 if current_pos[1] + direction_x >= self.width:
                     direction_x = 0
                     if current_pos[0] > finish_pos[0]:
@@ -294,6 +300,7 @@ class Board:
                         direction_y = 1
                     else:
                         cells += 1
+
                 if current_pos[0] == 1:
                     if self.board[current_pos[0] + 1][current_pos[1] - 1] == 5:
                         direction_y = 0
@@ -397,17 +404,30 @@ def start():
     game_map = Board(temporary_xy[0], temporary_xy[1])
     game_map.set_view(temporary_xy[0], temporary_xy[1])
     pygame.init()
-    screen = pygame.display.set_mode(get_resolution(), pygame.FULLSCREEN)
+    screen = pygame.display.set_mode(get_resolution())
     running = True
+
     while running:
+        board_clear(screen)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                btn.get_clicked(event.pos)
+
         board_update(game_map, screen)
+
+        layout.show(screen)
+        layout2.show(screen)
+
     pygame.quit()
 
 
 def board_update(game_map, screen):
-    screen.fill((0, 0, 0))
     game_map.render(screen)
+
+
+def board_clear(screen):
     pygame.display.flip()
+    screen.fill((0, 0, 0))
