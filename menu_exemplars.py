@@ -82,9 +82,9 @@ for x in range(1, 10):
                        text=f"Башня {x - 2} | {(x - 2) * 10 - 3} $", text_size=TEXT_SIZE))
 btn2l = MenuButtonList(lb2)
 
-w, h = get_resolution()
+w1, h1 = w, h = get_resolution()
 k = 5
 w, h = w // 12 - k, h // 12 - k
-layout = MenuLayOut(btn, lbl, place, 0, h, w, 600 - h, LAYOUT_INDENT, LAYOUT_BACKGROUND_COLOR, 'v')
+layout = MenuLayOut(btn, lbl, place, 0, h, w, h1 - h, LAYOUT_INDENT, LAYOUT_BACKGROUND_COLOR, 'v')
 
-layout2 = MenuLayOut(btn2l, MenuLabelList([]), place2, 0, 0, 800, h, LAYOUT_INDENT, LAYOUT_BACKGROUND_COLOR, 'h')
+layout2 = MenuLayOut(btn2l, MenuLabelList([]), place2, 0, 0, w1, h, LAYOUT_INDENT, LAYOUT_BACKGROUND_COLOR, 'h')
