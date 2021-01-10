@@ -22,6 +22,7 @@ class Board:
         self.width, self.height = width, height
         self.left, self.top, self.cell_size = None, None, None
         self.size = width * height
+        self.const_space = (width + height) // 20 / 10
         self.generate_way()
 
     def generate_way(self, road_forks=1):
@@ -29,7 +30,7 @@ class Board:
         :param road_forks: Кол-во развилок. Высчитывается по известной лишь мне формуле.
         :return: Занимается генерацией карты - self.board, ничего конкретного не возвращает.
         """
-        path_length = self.width * self.height // 5
+        path_length = self.width * self.height // 4.5
 
         def new_way():
             # Сначала расставляет рейтинг клеток для создания развилки.
@@ -69,12 +70,15 @@ class Board:
                         else:
                             near = False
                         cell_in_line_counter = 0
-                        for ii in self.board[row]:
-                            if ii == 5:
-                                cell_in_line_counter += 1
-                        for ii in range(len(self.board)):
-                            if self.board[ii][column] == 5:
-                                cell_in_line_counter += 1
+                        try:
+                            for ii in self.board[row]:
+                                if ii == 5:
+                                    cell_in_line_counter += 1
+                            for ii in range(len(self.board)):
+                                if self.board[ii][column] == 5:
+                                    cell_in_line_counter += 1
+                        except Exception:
+                            continue
                         median = ((len(self.board)) // 2, len(self.board[0]) // 2)
                         gip = (abs(median[0] - row) ** 2 + abs(median[1] - column) ** 2) ** 0.5
                         if gip == 0:
@@ -83,8 +87,9 @@ class Board:
                         else:
                             Rate_book[(row, column)] = ((cell_in_line_counter / self.size) * gip, near)
 
-            if len(Rate_book.keys()) / (self.width * self.height) > 0.1 or len(Rate_book.keys()) == 0:
-                print('No')
+            if len(Rate_book.keys()) / (self.width * self.height) > self.const_space or len(Rate_book.keys()) == 0:
+                print('No, there is too much free space, LoL. I`ll try again.')
+                self.const_space += 0.02
                 self.generate_way()
             else:
                 temp_max_value = sorted(Rate_book.values(), reverse=True)[0]
@@ -200,8 +205,10 @@ class Board:
                             final_start_fork = temp_distance
                             print(final_start_fork)
                             break
+                        else:
+                            print('Fork should not pass')
                     if final_start_fork:
-                        # self.board[final_start_fork[1][0]][final_start_fork[1][1]] = 22
+                        #  self.board[final_start_fork[1][0]][final_start_fork[1][1]] = 22
                         minimum_distance = final_start_fork
                         if minimum_distance[2] == 'go_right':
                             while point_coord[1] > minimum_distance[1][1]:
@@ -227,17 +234,30 @@ class Board:
                                 minimum_distance[1][0] -= 1
                                 self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
                             while point_coord[1] < minimum_distance[1][1]:
-                                minimum_distance[1][1] -= 1
+                                minimum_distance[1][1] += 1
                                 self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
                         temp, cell_found = minimum_distance[1][1] + 1, False
                         while temp < self.width - 1:
                             self.board[minimum_distance[1][0]][temp] = 5
                             temp += 1
-                            if self.board[minimum_distance[1][0]][temp] == 5 or \
-                                    self.board[minimum_distance[1][0] - 1][temp] == 5 or \
-                                    self.board[minimum_distance[1][0] + 1][temp] == 5:
+                            if self.board[minimum_distance[1][0] - 1][temp - 1] == 5 or \
+                                    self.board[minimum_distance[1][0] + 1][temp - 1] == 5:
                                 cell_found = True
                                 break
+                        if minimum_distance[1][1] == finish_pos[1]:
+                            print('rely')
+                            while minimum_distance[1][0] < finish_pos[0]:
+                                minimum_distance[1][0] += 1
+                                if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
+                                    break
+                                else:
+                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                            while minimum_distance[1][0] > finish_pos[0]:
+                                minimum_distance[1][0] -= 1
+                                if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
+                                    break
+                                else:
+                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
                         if not cell_found:
                             if minimum_distance[1][0] > finish_pos[0]:
                                 while minimum_distance[1][0] != finish_pos[0]:
@@ -247,12 +267,19 @@ class Board:
                                 while minimum_distance[1][0] != finish_pos[0]:
                                     minimum_distance[1][0] += 1
                                     self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                        while minimum_distance[1][1] > finish_pos[1] + 2:
+                            minimum_distance[1][1] -= 1
+                            self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                        # while minimum_distance[1][1] < finish_pos[1]:
+                        #    minimum_distance[1][1] += 1
+                        #    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
                     else:
                         print('Re-generate')
                         self.generate_way()
                 else:
                     print('Re-generate')
                     self.generate_way()
+
         while True:
             fork, swap_direction, cells, direction_x, direction_y, space = 0, 0, 0, 1, 0, 0
             self.board = [[1] * self.width for _ in range(self.height)]
@@ -324,13 +351,17 @@ class Board:
                     self.board[current_pos[0]][current_pos[1]] = 5
                 else:
                     break
-            if path_length - 5 <= cells * 1.15:
+            if path_length <= cells * 1.2:
                 self.board[finish_pos[0]][finish_pos[1]] = 8
                 for j in range(road_forks):
+                    print('Trying to create fork')
                     new_way()
                 break
+            else:
+                print('I need at least ' + str(path_length) + ' cells, but created only ~' +
+                      str(int(cells + (cells * 0.15 * road_forks))))
         # for i in self.board:
-            # print(i)
+        # print(i)
 
     def set_view(self, w2, h2):
         w, h = get_resolution()
@@ -390,13 +421,9 @@ class Board:
         tmp = self.get_cell(event_pos)
         if tmp:
             self.on_click(tmp)
-        print(tmp)
 
     def on_click(self, cell):
-        if self.board[cell[1]][cell[0]] == 0:
-            self.board[cell[1]][cell[0]] = 1
-        else:
-            self.board[cell[1]][cell[0]] = 0
+        print(cell)
 
 
 def start():
@@ -412,9 +439,9 @@ def start():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-
             if event.type == pygame.MOUSEBUTTONUP:
                 btn.get_clicked(event.pos)
+                game_map.get_click(event.pos)
 
         board_update(game_map, screen)
 
