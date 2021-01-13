@@ -401,7 +401,7 @@ def start():
     game_map = Board(temporary_xy[0], temporary_xy[1])
     game_map.set_view(temporary_xy[0], temporary_xy[1])
     pygame.init()
-    screen = pygame.display.set_mode(get_resolution())
+    screen = pygame.display.set_mode(get_resolution(), pygame.FULLSCREEN)
     running = True
 
     while running:

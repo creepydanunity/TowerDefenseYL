@@ -11,29 +11,13 @@ LABEL_INDENT = 5
 LAYOUT_INDENT = (5, 5)
 
 
-def print_1():
-    pass
-
-
-def print_2():
-    pass
-
-
-def print_3():
-    print(3)
-
-
-def print_4():
-    print(4)
-
-
-btn1 = MenuButton(0, 0, 0, 0, func=print_1, color=BUTTON_BACKGROUND_COLOR, text="Начать", text_color=TEXT_COLOR,
+btn1 = MenuButton(0, 0, 0, 0, color=BUTTON_BACKGROUND_COLOR, text="Начать", text_color=TEXT_COLOR,
                   text_size=TEXT_SIZE)
-btn2 = MenuButton(0, 0, 0, 0, func=print_2, color=BUTTON_BACKGROUND_COLOR, text="Пауза", text_color=TEXT_COLOR,
+btn2 = MenuButton(0, 0, 0, 0, color=BUTTON_BACKGROUND_COLOR, text="Пауза", text_color=TEXT_COLOR,
                   text_size=TEXT_SIZE)
-btn3 = MenuButton(0, 0, 0, 0, func=print_3, color=BUTTON_BACKGROUND_COLOR, text="Настройки", text_color=TEXT_COLOR,
+btn3 = MenuButton(0, 0, 0, 0, color=BUTTON_BACKGROUND_COLOR, text="Настройки", text_color=TEXT_COLOR,
                   text_size=TEXT_SIZE)
-btn4 = MenuButton(0, 0, 0, 0, func=print_4, color=BUTTON_BACKGROUND_COLOR, text="Выйти", text_color=TEXT_COLOR,
+btn4 = MenuButton(0, 0, 0, 0, color=BUTTON_BACKGROUND_COLOR, text="Выйти", text_color=TEXT_COLOR,
                   text_size=TEXT_SIZE)
 btn5 = MenuButton(0, 0, 0, 0, color=BUTTON_BACKGROUND_COLOR, text="Купить", text_color=TEXT_COLOR, text_size=TEXT_SIZE)
 lbl1 = MenuLabel(0, 0, 0, 0, color=LABEL_BACKGROUND_COLOR, text="Валюта:\nx $", text_color=TEXT_COLOR,
