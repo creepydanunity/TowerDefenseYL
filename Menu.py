@@ -5,7 +5,7 @@ import pygame.font
 class MenuButton(object):
 
     def __init__(self, x: int, y: int, w: int, h: int, func=lambda: None, color="#ffffff", width=0, text="",
-                 text_color="#000000", text_size=50) -> None:
+                 text_color="#000000", text_size=50, args=[]) -> None:
         """
         Кнопка
 
@@ -37,6 +37,7 @@ class MenuButton(object):
         self.text = text
         self.text_color = text_color
         self.text_size = text_size
+        self.args = args
         self.enabled = True
 
     def is_clicked(self, pos: tuple) -> bool:
@@ -57,7 +58,10 @@ class MenuButton(object):
         Выполняет функцию у кнопки
         """
         if self.enabled:
-            eval('self.func()')
+            if self.args:
+                eval(f'self.func({self.args})')
+            else:
+                eval(f'self.func()')
 
     def get_clicked(self, pos: tuple) -> None:
         """

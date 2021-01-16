@@ -1,11 +1,10 @@
-from random import randint
-
 import pygame
-
-from menu_exemplars import layout, layout2, btn
+from menu_exemplars import layout, layout2, btn, btn2l
 from settings import get_resolution
 from random import randint
 import copy
+
+all_sprites, picked_Tower, is_picked, cell_size_a = pygame.sprite.Group(), -1, False, (0, 0)
 
 
 class Board:
@@ -18,11 +17,14 @@ class Board:
         :param width: Ширина поля в клетках
         :param height: Высота поля в клетках
         """
+        global cell_size_a
         self.board = [[1] * width for _ in range(height)]
+        self.to_draw = [[1] * width for _ in range(height)]
         self.width, self.height = width, height
         self.left, self.top, self.cell_size = None, None, None
         self.size = width * height
         self.const_space = (width + height) // 20 / 10
+        cell_size_a = self.set_view(width, height)
         self.generate_way()
 
     def generate_way(self, road_forks=1):
@@ -214,28 +216,52 @@ class Board:
                             while point_coord[1] > minimum_distance[1][1]:
                                 minimum_distance[1][1] += 1
                                 self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                    Sprite(img="Sprites/dirt_clear.png",
+                                           pos=(minimum_distance[1][0], minimum_distance[1][1]))
                             if minimum_distance != point_coord:
                                 while point_coord[0] > minimum_distance[1][0]:
                                     minimum_distance[1][0] += 1
                                     self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                    self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                        Sprite(img="Sprites/dirt_clear.png",
+                                               pos=(minimum_distance[1][0], minimum_distance[1][1]))
                                 while point_coord[0] < minimum_distance[1][0]:
                                     minimum_distance[1][0] -= 1
                                     self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                    self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                        Sprite(img="Sprites/dirt_clear.png",
+                                               pos=(minimum_distance[1][0], minimum_distance[1][1]))
                         elif minimum_distance[2] == 'go_down':
                             while point_coord[0] > minimum_distance[1][0]:
                                 minimum_distance[1][0] += 1
                                 self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                    Sprite(img="Sprites/dirt_clear.png",
+                                           pos=(minimum_distance[1][0], minimum_distance[1][1]))
                             if minimum_distance != point_coord:
                                 while point_coord[1] > minimum_distance[1][1]:
                                     minimum_distance[1][1] += 1
                                     self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                    self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                        Sprite(img="Sprites/dirt_clear.png",
+                                               pos=(minimum_distance[1][0], minimum_distance[1][1]))
                         elif minimum_distance[2] == 'go_up':
                             while point_coord[0] < minimum_distance[1][0]:
                                 minimum_distance[1][0] -= 1
                                 self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                    Sprite(img="Sprites/dirt_clear.png",
+                                           pos=(minimum_distance[1][0], minimum_distance[1][1]))
                             while point_coord[1] < minimum_distance[1][1]:
                                 minimum_distance[1][1] += 1
-                                self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                try:
+                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                    self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                        Sprite(img="Sprites/dirt_clear.png",
+                                               pos=(minimum_distance[1][0], minimum_distance[1][1]))
+                                except IndexError:
+                                    print('[!] Ignored error - IndexError. LoL =D')
                         temp, cell_found = minimum_distance[1][1] + 1, False
                         while temp < self.width - 1:
                             self.board[minimum_distance[1][0]][temp] = 5
@@ -245,7 +271,6 @@ class Board:
                                 cell_found = True
                                 break
                         if minimum_distance[1][1] == finish_pos[1]:
-                            print('rely')
                             while minimum_distance[1][0] < finish_pos[0]:
                                 minimum_distance[1][0] += 1
                                 if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
@@ -260,19 +285,17 @@ class Board:
                                     self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
                         if not cell_found:
                             if minimum_distance[1][0] > finish_pos[0]:
+                                print('>')
                                 while minimum_distance[1][0] != finish_pos[0]:
                                     minimum_distance[1][0] -= 1
                                     self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
                             else:
+                                print('<')
                                 while minimum_distance[1][0] != finish_pos[0]:
                                     minimum_distance[1][0] += 1
                                     self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
-                        while minimum_distance[1][1] > finish_pos[1] + 2:
-                            minimum_distance[1][1] -= 1
-                            self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
-                        # while minimum_distance[1][1] < finish_pos[1]:
-                        #    minimum_distance[1][1] += 1
-                        #    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                        if minimum_distance == finish_pos:
+                            self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 8
                     else:
                         print('Re-generate')
                         self.generate_way()
@@ -349,17 +372,21 @@ class Board:
                     current_pos = (current_pos[0] + direction_y, current_pos[1] + direction_x)
                     cells += 1
                     self.board[current_pos[0]][current_pos[1]] = 5
+                    self.to_draw[current_pos[0]][current_pos[1]] = \
+                        Sprite(img="Sprites/dirt_clear.png",
+                               pos=(current_pos[0], current_pos[1]))
                 else:
                     break
             if path_length <= cells * 1.2:
                 self.board[finish_pos[0]][finish_pos[1]] = 8
+                self.to_draw[finish_pos[0]][finish_pos[1]] = \
+                    Sprite(img="Sprites/base.png",
+                           pos=(finish_pos[0], finish_pos[1]))
                 for j in range(road_forks):
                     print('Trying to create fork')
                     new_way()
+                    print('[+] Successfully')
                 break
-            else:
-                print('I need at least ' + str(path_length) + ' cells, but created only ~' +
-                      str(int(cells + (cells * 0.15 * road_forks))))
         # for i in self.board:
         # print(i)
 
@@ -380,56 +407,70 @@ class Board:
     def render(self, screen):
         for i in range(self.height):
             for j in range(self.width):
-                if self.board[i][j] == 9:
-                    pygame.draw.rect(screen,
-                                     (255, 0, 0),
-                                     (j * self.cell_size[0] + self.left,
-                                      i * self.cell_size[1] + self.top,
-                                      self.cell_size[0], self.cell_size[1]), self.board[i][j], 50)
-                elif self.board[i][j] == 99:
-                    pygame.draw.rect(screen,
-                                     (7, 204, 147),
-                                     (j * self.cell_size[0] + self.left,
-                                      i * self.cell_size[1] + self.top,
-                                      self.cell_size[0], self.cell_size[1]), self.board[i][j], 0)
-                elif self.board[i][j] == 8:
-                    pygame.draw.rect(screen,
-                                     (0, 255, 0),
-                                     (j * self.cell_size[0] + self.left,
-                                      i * self.cell_size[1] + self.top,
-                                      self.cell_size[0], self.cell_size[1]), self.board[i][j], 50)
-                elif self.board[i][j] == 5:
-                    pygame.draw.rect(screen,
-                                     (255, 255, 0),
-                                     (j * self.cell_size[0] + self.left,
-                                      i * self.cell_size[1] + self.top,
-                                      self.cell_size[0], self.cell_size[1]), self.board[i][j], 0)
-                elif self.board[i][j] == 3:
-                    pygame.draw.rect(screen,
-                                     (255, 0, 190),
-                                     (j * self.cell_size[0] + self.left,
-                                      i * self.cell_size[1] + self.top,
-                                      self.cell_size[0], self.cell_size[1]), self.board[i][j], 0)
-                else:
-                    pygame.draw.rect(screen,
-                                     (255, 255, 255),
-                                     (j * self.cell_size[0] + self.left,
-                                      i * self.cell_size[1] + self.top,
-                                      self.cell_size[0], self.cell_size[1]), self.board[i][j], 0)
+                self.to_draw[i][j].sprite_draw()
+
+    def on_click(self, cell):
+        global is_picked
+        if is_picked and self.board[cell[1]][cell[0]] == 1 and \
+                0 < cell[1] < self.height and 2 < cell[0] < self.width - 1:
+            self.to_draw[cell[1]][cell[0]] = Base_Tower(cell[::-1], self)
+            self.board[cell[1]][cell[0]] = picked_Tower
+            is_picked = False
 
     def get_click(self, event_pos):
         tmp = self.get_cell(event_pos)
         if tmp:
             self.on_click(tmp)
 
-    def on_click(self, cell):
-        print(cell)
+
+class Base_Tower:
+    def __init__(self, board_position, board, dmg=10, reload=1, shot_distance=2, projectile_speed=0.5, level=1,
+                 img='Sprites/tb_1.png'):
+        """
+        :param dmg: Базовый урон башни
+        :param reload: Время перезарядки
+        :param shot_distance: Дальность поражения
+        :param projectile_speed: Скорость полёта снаряда.
+        """
+        self.SPD = projectile_speed
+        self.ATK = dmg
+        self.RLD = reload
+        self.S_DIS = shot_distance
+        self.board_pos = board_position
+        self.LVL = level
+        self.img = img
+        self.tower_draw(board)
+
+    def tower_draw(self, board: Board):
+        global screen, all_sprites
+        sprite = pygame.sprite.Sprite()
+        img = pygame.image.load(self.img)
+        sprite.image = pygame.transform.scale(img, board.cell_size)
+        sprite.rect = sprite.image.get_rect()
+        sprite.rect.x = board.cell_size[0] * self.board_pos[1] + board.left
+        sprite.rect.y = board.cell_size[1] * self.board_pos[0] + board.top
+        all_sprites.add(sprite)
+
+
+class Sprite:
+    def __init__(self, img, pos):
+        self.img, self.board_pos = img, pos
+        self.sprite_draw()
+
+    def sprite_draw(self):
+        sprite = pygame.sprite.Sprite()
+        img = pygame.image.load(self.img)
+        sprite.image = pygame.transform.scale(img, cell_size)
+        sprite.rect = sprite.image.get_rect()
+        sprite.rect.x = board.cell_size[0] * self.board_pos[1] + board.left
+        sprite.rect.y = board.cell_size[1] * self.board_pos[0] + board.top
+        all_sprites.add(sprite)
 
 
 def start():
+    global screen
     temporary_xy = list(map(int, input("Кол-во клеток, x; y\n").split()))
     game_map = Board(temporary_xy[0], temporary_xy[1])
-    game_map.set_view(temporary_xy[0], temporary_xy[1])
     pygame.init()
     screen = pygame.display.set_mode(get_resolution())
     running = True
@@ -441,8 +482,8 @@ def start():
                 running = False
             if event.type == pygame.MOUSEBUTTONUP:
                 btn.get_clicked(event.pos)
+                btn2l.get_clicked(event.pos)
                 game_map.get_click(event.pos)
-
         board_update(game_map, screen)
 
         layout.show(screen)
@@ -453,6 +494,7 @@ def start():
 
 def board_update(game_map, screen):
     game_map.render(screen)
+    all_sprites.draw(screen)
 
 
 def board_clear(screen):

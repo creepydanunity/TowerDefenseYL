@@ -1,5 +1,7 @@
 from Menu import *
 from settings import get_resolution
+import main_game as mg
+
 
 BUTTON_BACKGROUND_COLOR = "#737373"
 BUTTON_TOWERS_BACKGROUND_COLOR = "#8c8c8c"
@@ -12,11 +14,11 @@ LAYOUT_INDENT = (5, 5)
 
 
 def print_1():
-    pass
+    print(1)
 
 
 def print_2():
-    pass
+    print(2)
 
 
 def print_3():
@@ -25,6 +27,14 @@ def print_3():
 
 def print_4():
     print(4)
+
+
+def tower_test(*args):
+    arguments = args[0]
+    if arguments[1]:
+        print('Tower ' + str(arguments[0]))
+        mg.is_picked = True
+        mg.picked_Tower = arguments[0]
 
 
 btn1 = MenuButton(0, 0, 0, 0, func=print_1, color=BUTTON_BACKGROUND_COLOR, text="Начать", text_color=TEXT_COLOR,
@@ -70,7 +80,8 @@ for x in range(1, 10):
         lb2.append(btn5)
     elif x == 2:
         lb2.append(
-            MenuButton(0, 0, 0, 0, color=BUTTON_BACKGROUND_COLOR, text="<", text_color=TEXT_COLOR, text_size=50)
+            MenuButton(0, 0, 0, 0, color=BUTTON_BACKGROUND_COLOR, text="<",
+                       text_color=TEXT_COLOR, text_size=50)
         )
     elif x == 9:
         lb2.append(
@@ -78,7 +89,7 @@ for x in range(1, 10):
         )
     else:
         lb2.append(
-            MenuButton(0, 0, 0, 0, color=BUTTON_TOWERS_BACKGROUND_COLOR, text_color=TEXT_COLOR,
+            MenuButton(0, 0, 0, 0, func=tower_test, args=[x + 8, True], color=BUTTON_TOWERS_BACKGROUND_COLOR, text_color=TEXT_COLOR,
                        text=f"Башня {x - 2} | {(x - 2) * 10 - 3} $", text_size=TEXT_SIZE))
 btn2l = MenuButtonList(lb2)
 
