@@ -115,7 +115,7 @@ class Board:
                 # self.board[point_coord[1]][point_coord[0]] = 22
                 minimum_distances = []
                 for row in range(0, len(self.board)):
-                    for column in range(3, self.width // 2 + 1):
+                    for column in range(3, self.width // 2 + 2):
                         near_cell_way_counter = 0
                         if self.board[row][column] == 5:
                             to_right = False
@@ -225,104 +225,107 @@ class Board:
                     if final_start_fork:
                         #  self.board[final_start_fork[1][0]][final_start_fork[1][1]] = 22
                         minimum_distance = final_start_fork
-                        if minimum_distance[2] == 'go_right':
-                            while point_coord[1] > minimum_distance[1][1]:
-                                minimum_distance[1][1] += 1
-                                self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
-                                self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
-                                    Sprite(img="Sprites/dirt_clear.png",
-                                           pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
-                            if minimum_distance != point_coord:
-                                while point_coord[0] > minimum_distance[1][0]:
-                                    minimum_distance[1][0] += 1
-                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
-                                    self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
-                                        Sprite(img="Sprites/dirt_clear.png",
-                                               pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
-                                while point_coord[0] < minimum_distance[1][0]:
-                                    minimum_distance[1][0] -= 1
-                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
-                                    self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
-                                        Sprite(img="Sprites/dirt_clear.png",
-                                               pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
-                        elif minimum_distance[2] == 'go_down':
-                            while point_coord[0] > minimum_distance[1][0]:
-                                minimum_distance[1][0] += 1
-                                self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
-                                self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
-                                    Sprite(img="Sprites/dirt_clear.png",
-                                           pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
-                            if minimum_distance != point_coord:
+                        if point_coord[1] >= finish_pos[1] - 2:
+                            self.generate_way()
+                        else:
+                            if minimum_distance[2] == 'go_right':
                                 while point_coord[1] > minimum_distance[1][1]:
                                     minimum_distance[1][1] += 1
                                     self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
                                     self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
                                         Sprite(img="Sprites/dirt_clear.png",
                                                pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
-                        elif minimum_distance[2] == 'go_up':
-                            while point_coord[0] < minimum_distance[1][0]:
-                                minimum_distance[1][0] -= 1
-                                self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
-                                self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
-                                    Sprite(img="Sprites/dirt_clear.png",
-                                           pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
-                            while point_coord[1] < minimum_distance[1][1]:
-                                minimum_distance[1][1] += 1
-                                try:
-                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
-                                    self.to_draw[current_pos[0]][current_pos[1]] = \
-                                        Sprite(img="Sprites/dirt_clear.png",
-                                               pos=(current_pos[0], current_pos[1]), board=self)
-                                except IndexError:
-                                    print('[!] Ignored error - IndexError. LoL =D')
-                                    break
-                        temp, cell_found = minimum_distance[1][1] + 1, False
-                        while temp < self.width - 1:
-                            self.board[minimum_distance[1][0]][temp] = 5
-                            self.to_draw[minimum_distance[1][0]][temp] = \
-                                Sprite(img="Sprites/dirt_clear.png",
-                                       pos=(minimum_distance[1][0], temp), board=self)
-                            temp += 1
-                            if self.board[minimum_distance[1][0] - 1][temp - 1] == 5 or \
-                                    self.board[minimum_distance[1][0] + 1][temp - 1] == 5:
-                                cell_found = True
-                                break
-                        if minimum_distance[1][1] == finish_pos[1]:
-                            while minimum_distance[1][0] < finish_pos[0]:
-                                minimum_distance[1][0] += 1
-                                if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
-                                    break
-                                else:
-                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
-                                    self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
-                                        Sprite(img="Sprites/dirt_clear.png",
-                                               pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
-                            while minimum_distance[1][0] > finish_pos[0]:
-                                minimum_distance[1][0] -= 1
-                                if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
-                                    break
-                                else:
-                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
-                                    self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
-                                        Sprite(img="Sprites/dirt_clear.png",
-                                               pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
-                        try:
-                            if not cell_found:
-                                if minimum_distance[1][0] > finish_pos[0]:
-                                    print('>')
-                                    while minimum_distance[1][0] != finish_pos[0]:
-                                        minimum_distance[1][0] -= 1
-                                        self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
-                                else:
-                                    print('<')
-                                    while minimum_distance[1][0] != finish_pos[0]:
+                                if minimum_distance != point_coord:
+                                    while point_coord[0] > minimum_distance[1][0]:
                                         minimum_distance[1][0] += 1
                                         self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
-                        except IndexError:
-                            self.generate_way()
-                            return
-                        if minimum_distance == finish_pos:
-                            self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 8
+                                        self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                            Sprite(img="Sprites/dirt_clear.png",
+                                                   pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
+                                    while point_coord[0] < minimum_distance[1][0]:
+                                        minimum_distance[1][0] -= 1
+                                        self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                        self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                            Sprite(img="Sprites/dirt_clear.png",
+                                                   pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
+                            elif minimum_distance[2] == 'go_down':
+                                while point_coord[0] > minimum_distance[1][0]:
+                                    minimum_distance[1][0] += 1
+                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                    self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                        Sprite(img="Sprites/dirt_clear.png",
+                                               pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
+                                if minimum_distance != point_coord:
+                                    while point_coord[1] > minimum_distance[1][1]:
+                                        minimum_distance[1][1] += 1
+                                        self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                        self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                            Sprite(img="Sprites/dirt_clear.png",
+                                                   pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
+                            elif minimum_distance[2] == 'go_up':
+                                while point_coord[0] < minimum_distance[1][0]:
+                                    minimum_distance[1][0] -= 1
+                                    self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                    self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                        Sprite(img="Sprites/dirt_clear.png",
+                                               pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
+                                while point_coord[1] < minimum_distance[1][1]:
+                                    minimum_distance[1][1] += 1
+                                    try:
+                                        self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                        self.to_draw[current_pos[0]][current_pos[1]] = \
+                                            Sprite(img="Sprites/dirt_clear.png",
+                                                   pos=(current_pos[0], current_pos[1]), board=self)
+                                    except IndexError:
+                                        print('[!] Ignored error - IndexError. LoL =D')
+                                        break
+                            temp, cell_found = minimum_distance[1][1] + 1, False
+                            while temp < self.width - 1:
+                                self.board[minimum_distance[1][0]][temp] = 5
+                                self.to_draw[minimum_distance[1][0]][temp] = \
+                                    Sprite(img="Sprites/dirt_clear.png",
+                                           pos=(minimum_distance[1][0], temp), board=self)
+                                temp += 1
+                                if self.board[minimum_distance[1][0] - 1][temp - 1] == 5 or \
+                                        self.board[minimum_distance[1][0] + 1][temp - 1] == 5:
+                                    cell_found = True
+                                    break
+                            if minimum_distance[1][1] == finish_pos[1]:
+                                while minimum_distance[1][0] < finish_pos[0]:
+                                    minimum_distance[1][0] += 1
+                                    if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
+                                        break
+                                    else:
+                                        self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                        self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                            Sprite(img="Sprites/dirt_clear.png",
+                                                   pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
+                                while minimum_distance[1][0] > finish_pos[0]:
+                                    minimum_distance[1][0] -= 1
+                                    if self.board[minimum_distance[1][0]][minimum_distance[1][1]] == 5:
+                                        break
+                                    else:
+                                        self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                        self.to_draw[minimum_distance[1][0]][minimum_distance[1][1]] = \
+                                            Sprite(img="Sprites/dirt_clear.png",
+                                                   pos=(minimum_distance[1][0], minimum_distance[1][1]), board=self)
+                            try:
+                                if not cell_found:
+                                    if minimum_distance[1][0] > finish_pos[0]:
+                                        print('>')
+                                        while minimum_distance[1][0] != finish_pos[0]:
+                                            minimum_distance[1][0] -= 1
+                                            self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                                    else:
+                                        print('<')
+                                        while minimum_distance[1][0] != finish_pos[0]:
+                                            minimum_distance[1][0] += 1
+                                            self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 5
+                            except IndexError:
+                                self.generate_way()
+                                return
+                            if minimum_distance[1] == finish_pos:
+                                self.board[minimum_distance[1][0]][minimum_distance[1][1]] = 8
                     else:
                         print('Re-generate')
                         self.generate_way()
@@ -501,10 +504,11 @@ class Base_Enemy:
     def chose_direction(self, board: Board):
         if board.board[self.pos[0]][self.pos[1] + 1] == 8:
             self.direction = 0
-        elif board.board[self.pos[0] + 1][self.pos[1]] == 8:
-            self.direction = 1
-        elif board.board[self.pos[0] - 1][self.pos[1]] == 8:
-            self.direction = -1
+        elif self.pos[1] == board.finish_pos[0]:
+            if self.pos[0] < board.finish_pos[1]:
+                self.direction = 1
+            else:
+                self.direction = 0
         elif board.board[self.pos[0]][self.pos[1] + 1] == 5:
             if board.board[self.pos[0]][self.pos[1] - 1] == 5:
                 if board.board[self.pos[0] + 1][self.pos[1]] == 5 and self.used_fork is False:
