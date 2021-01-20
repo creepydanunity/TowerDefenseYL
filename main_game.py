@@ -12,7 +12,7 @@ class Board:
     :type Классическое клеточное игровое поле для TDшки.
     """
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, hp=50):
         """
         :param width: Ширина поля в клетках
         :param height: Высота поля в клетках
@@ -20,8 +20,10 @@ class Board:
         global cell_size_a
         self.board = [[1] * width for _ in range(height)]
         self.width, self.height = width, height
+        self.hp = hp
         self.to_draw = []
-        self.enemies = [[0] * width for _ in range(height)]
+        self.enemies_spawn = (0, 0)
+        self.enemies = [[1] * width for _ in range(height)]
         for i in range(self.height):
             temp = []
             for j in range(self.width):
@@ -335,11 +337,12 @@ class Board:
             y = randint(3, self.height - 2)
             self.board[y][1] = 9
             current_pos = (y, 1)
-            self.enemies[y][1] = 1
+            self.enemies_spawn = (y, 1)
             self.to_draw[y][1] = Sprite('Sprites/spawn.png', current_pos, self)
             y = randint(2, self.height - 1)
             self.board[y][self.width - 2] = 8
             finish_pos = y, self.width - 2
+            self.finish_pos = finish_pos
             while current_pos != finish_pos:
                 if space == 0:
                     if swap_direction > 1:
@@ -437,11 +440,12 @@ class Board:
                         return j, i
         return None
 
-    def render(self, screen):
+    def render(self):
         for i in range(self.height):
             for j in range(self.width):
                 if self.to_draw[i][j].__class__ == Sprite:
-                    self.to_draw[i][j].sprite_draw(self)
+                    if self.to_draw[i][j].img_draw is False:
+                        self.to_draw[i][j].sprite_draw(self)
 
     def on_click(self, cell):
         global is_picked, need_to_draw
@@ -461,39 +465,118 @@ class Board:
 
 
 class Base_Enemy:
-    def __init__(self, hp, speed, defense, pos, start_pos, board: Board, img='Sprite/enemy.png'):
-        self.hp, self.speed, self.defense, self.pos = hp, speed, defense, pos
+    def __init__(self, pos, start_pos, board: Board, hp=10, speed=5, defense=0.1, dmg=1, img='Sprites/enemy.png'):
+        global all_sprites
+        pos = [pos[0], pos[1]]
+        self.hp, self.speed, self.defense, self.pos, self.dmg = hp, speed, defense, pos, dmg
         self.prev_pos = pos
         self.direction = 0
         self.image = pygame.image.load(img)
-        self.image = pygame.transform.scale(self.image, (board.cell_size[0], board.cell_size[1]))
-        self.image.set_colorkey(-1)
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = board.left + start_pos[1] * board.cell_size[0], \
-                                   board.top + start_pos[0] * board.cell_size[1]
+        self.sprite = pygame.sprite.Sprite(all_sprites)
+        self.sprite.image = self.image
+        self.used_fork = False
+        self.sprite.image = pygame.transform.scale(self.sprite.image,
+                                                   (board.cell_size[0] // 3, board.cell_size[1] // 3))
+        self.sprite.image.set_colorkey(-1)
+        self.sprite.rect = self.sprite.image.get_rect()
+        self.sprite.rect.x, self.sprite.rect.y = board.left + start_pos[1] * board.cell_size[0] + \
+                                                 board.cell_size[0] // 2 - board.cell_size[0] // 6, \
+                                                 board.top + start_pos[0] * board.cell_size[1] + \
+                                                 board.cell_size[1] // 2 - board.cell_size[1] // 6
+
+    def do_you_know_the_way(self, board: Board, direction):
+        y = self.pos[0]
+        if direction == -1:
+            while y > 0:
+                if board.board[y][self.pos[1] + 1] == 5:
+                    return True
+                y -= 1
+        elif direction == 1:
+            while y < board.height:
+                if board.board[y][self.pos[1] + 1] == 5:
+                    return True
+                y += 1
+        return False
 
     def chose_direction(self, board: Board):
-        if board.board[self.pos[0]][self.pos[1] + 1] == 5:
+        if board.board[self.pos[0]][self.pos[1] + 1] == 8:
+            self.direction = 0
+        elif board.board[self.pos[0] + 1][self.pos[1]] == 8:
+            self.direction = 1
+        elif board.board[self.pos[0] - 1][self.pos[1]] == 8:
+            self.direction = -1
+        elif board.board[self.pos[0]][self.pos[1] + 1] == 5:
             if board.board[self.pos[0]][self.pos[1] - 1] == 5:
-                if board.board[self.pos[0] + 1][self.pos[1]] == 5:
+                if board.board[self.pos[0] + 1][self.pos[1]] == 5 and self.used_fork is False:
                     self.direction = choice([0, 1])
-                elif board.board[self.pos[0] - 1][self.pos[1]] == 5:
+                    self.used_fork = True
+                elif board.board[self.pos[0] - 1][self.pos[1]] == 5 and self.used_fork is False:
                     self.direction = choice([-1, 0])
+                    self.used_fork = True
                 else:
-                    board.board = 0
+                    self.direction = 0
+            elif board.board[self.pos[0] + 1][self.pos[1]] == 5 and self.direction == 1 and self.used_fork is False:
+                self.direction = choice([0, 1])
+                self.used_fork = True
+            elif board.board[self.pos[0] - 1][self.pos[1]] == 5 and self.direction == -1 and self.used_fork is False:
+                self.direction = choice([0, 1])
+                self.used_fork = True
+            else:
+                self.direction = 0
         elif board.board[self.pos[0] + 1][self.pos[1]] == 5:
-            if self.direction == 0:
+            if board.board[self.pos[0] - 1][self.pos[1]] == 5 and self.direction == 0 and not self.used_fork:
+                self.direction = choice([-1, 1])
+                self.used_fork = True
+            elif board.board[self.pos[0] - 1][self.pos[1]] == 5 and self.direction == 0:
+                if self.do_you_know_the_way(board, 1):
+                    self.direction = 1
+                else:
+                    self.direction = -1
+            elif self.direction == -1:
+                pass
+            else:
                 self.direction = 1
         elif board.board[self.pos[0] - 1][self.pos[1]] == 5:
-            if self.direction == 0:
+            if board.board[self.pos[0] + 1][self.pos[1]] == 5 and self.direction == 0 and not self.used_fork:
+                self.direction = choice([-1, 1])
+                self.used_fork = True
+            elif self.direction == 0:
                 self.direction = -1
 
     def move(self, board: Board):
-        self.chose_direction(board)
-        if self.direction == 0:
-            self.rect = self.rect.move(self.speed, 0)
+        if self.hp > 0:
+            x = (self.sprite.rect.x - board.left - board.cell_size[0] / 3 +
+                 board.cell_size[0] // 6) // board.cell_size[0]
+            y = (self.sprite.rect.y - board.top - board.cell_size[1] / 3 +
+                 board.cell_size[1] // 6) // board.cell_size[1]
+            if x != self.pos[1]:
+                self.prev_pos = self.pos
+                self.pos[1] = round(x)
+                self.chose_direction(board)
+            if y > self.pos[0]:
+                self.prev_pos = self.pos
+                self.pos[0] = round(y)
+                self.chose_direction(board)
+            else:
+                if (self.sprite.rect.y - board.top - board.cell_size[1] / 3 +
+                    board.cell_size[1] // 6 + board.cell_size[1] // 2) \
+                        // board.cell_size[1] < self.pos[0]:
+                    self.prev_pos = self.pos
+                    self.pos[0] = round(y)
+                    self.chose_direction(board)
+            if (y, x) == board.finish_pos:
+                board.hp -= self.dmg
+                print(board.hp)
+                self.hp = 0
+            if self.direction == 0:
+                self.sprite.rect = self.sprite.rect.move(self.speed, 0)
+            else:
+                self.sprite.rect = self.sprite.rect.move(0, self.speed * self.direction)
         else:
-            self.rect = self.rect.move(0, self.speed * self.direction)
+            self.sprite.kill()
+            for i in board.enemies:
+                if i == self:
+                    i.remove(object=self)
 
 
 class Base_Tower:
@@ -528,8 +611,10 @@ class Base_Tower:
 class Sprite:
     def __init__(self, img, pos, board):
         self.img, self.board_pos = img, pos
+        self.img_draw = False
 
     def sprite_draw(self, game_map):
+        self.img_draw = True
         sprite = pygame.sprite.Sprite()
         img = pygame.image.load(self.img)
         sprite.image = pygame.transform.scale(img, cell_size_a)
@@ -540,7 +625,7 @@ class Sprite:
 
 
 def start():
-    global screen, need_to_render
+    global screen, need_to_render, all_sprites
     need_to_render = False
     temporary_xy = list(map(int, input("Кол-во клеток, x; y\n").split()))
     game_map = Board(temporary_xy[0], temporary_xy[1])
@@ -548,6 +633,7 @@ def start():
     screen = pygame.display.set_mode(get_resolution())
     running = True
     board_update(game_map, screen)
+    start_pos = game_map.enemies_spawn
     while running:
         pygame.display.flip()
         for event in pygame.event.get():
@@ -556,10 +642,19 @@ def start():
             if event.type == pygame.MOUSEBUTTONUP:
                 btn.get_clicked(event.pos)
                 btn2l.get_clicked(event.pos)
+                t = Base_Enemy(start_pos, start_pos, game_map)
+                if game_map.enemies[start_pos[0]][start_pos[1]] == 1:
+                    game_map.enemies[start_pos[0]][start_pos[1]] = [t]
+                else:
+                    game_map.enemies[start_pos[0]][start_pos[1]].append(t)
                 game_map.get_click(event.pos)
-        if need_to_render:
-            board_update(game_map, screen)
-            need_to_render = False
+        for i in game_map.enemies:
+            for j in i:
+                if j.__class__ == list:
+                    for ii in j:
+                        if ii.__class__ == Base_Enemy:
+                            ii.move(game_map)
+        board_update(game_map, screen)
         layout.show(screen)
         layout2.show(screen)
 
@@ -567,5 +662,5 @@ def start():
 
 
 def board_update(game_map: Board, screen_to_render):
-    game_map.render(screen_to_render)
+    game_map.render()
     all_sprites.draw(screen_to_render)
