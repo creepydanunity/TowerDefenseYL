@@ -1,6 +1,6 @@
 import pygame
 from menu_exemplars import layout, layout2, btn, btn2l
-from settings import get_resolution
+from settings import get_resolution, get_fps
 from random import randint, choice
 import copy
 
@@ -446,6 +446,10 @@ class Board:
     def render(self):
         for i in range(self.height):
             for j in range(self.width):
+                if self.board[i][j] == 8:
+                    self.to_draw[i][j] = Sprite(board=self, img='Sprites/base.png', pos=(i, j))
+                elif self.board[i][j] == 5 and self.to_draw[i][j].img != 'Sprites/dirt_clear.png':
+                    self.to_draw[i][j] = Sprite(board=self, img='Sprites/dirt_clear.png', pos=(i, j))
                 if self.to_draw[i][j].__class__ == Sprite:
                     if self.to_draw[i][j].img_draw is False:
                         self.to_draw[i][j].sprite_draw(self)
@@ -502,11 +506,14 @@ class Base_Enemy:
         return False
 
     def chose_direction(self, board: Board):
+        print(self.used_fork)
         if board.board[self.pos[0]][self.pos[1] + 1] == 8:
             self.direction = 0
-        elif self.pos[1] == board.finish_pos[0]:
-            if self.pos[0] < board.finish_pos[1]:
+        elif self.pos[1] == board.finish_pos[1]:
+            if self.pos[0] < board.finish_pos[0]:
                 self.direction = 1
+            elif self.pos[0] > board.finish_pos[0]:
+                self.direction = -1
             else:
                 self.direction = 0
         elif board.board[self.pos[0]][self.pos[1] + 1] == 5:
@@ -523,14 +530,20 @@ class Base_Enemy:
                 self.direction = choice([0, 1])
                 self.used_fork = True
             elif board.board[self.pos[0] - 1][self.pos[1]] == 5 and self.direction == -1 and self.used_fork is False:
-                self.direction = choice([0, 1])
+                self.direction = choice([0, -1])
                 self.used_fork = True
             else:
                 self.direction = 0
         elif board.board[self.pos[0] + 1][self.pos[1]] == 5:
             if board.board[self.pos[0] - 1][self.pos[1]] == 5 and self.direction == 0 and not self.used_fork:
-                self.direction = choice([-1, 1])
-                self.used_fork = True
+                if self.do_you_know_the_way(board, 1):
+                    if self.do_you_know_the_way(board, -1):
+                        self.direction = choice([-1, 1])
+                        self.used_fork = True
+                    else:
+                        self.direction = 1
+                else:
+                    self.direction = 1
             elif board.board[self.pos[0] - 1][self.pos[1]] == 5 and self.direction == 0:
                 if self.do_you_know_the_way(board, 1):
                     self.direction = 1
@@ -549,15 +562,15 @@ class Base_Enemy:
 
     def move(self, board: Board):
         if self.hp > 0:
-            x = (self.sprite.rect.x - board.left - board.cell_size[0] / 3 +
+            x = (self.sprite.rect.x - board.left - board.cell_size[0] / 2 +
                  board.cell_size[0] // 6) // board.cell_size[0]
-            y = (self.sprite.rect.y - board.top - board.cell_size[1] / 3 +
+            y = (self.sprite.rect.y - board.top - board.cell_size[1] / 2 +
                  board.cell_size[1] // 6) // board.cell_size[1]
             if x != self.pos[1]:
                 self.prev_pos = self.pos
                 self.pos[1] = round(x)
                 self.chose_direction(board)
-            if y > self.pos[0]:
+            elif y > self.pos[0]:
                 self.prev_pos = self.pos
                 self.pos[0] = round(y)
                 self.chose_direction(board)
@@ -568,14 +581,17 @@ class Base_Enemy:
                     self.prev_pos = self.pos
                     self.pos[0] = round(y)
                     self.chose_direction(board)
-            if (y, x) == board.finish_pos:
+            if (y, x) == board.finish_pos or \
+                    ((self.sprite.rect.y - board.top - board.cell_size[1] / 3 +
+                      board.cell_size[1] // 6 + board.cell_size[1] // 2)
+                     // board.cell_size[1] // board.cell_size[1], x) == board.finish_pos:
                 board.hp -= self.dmg
                 print(board.hp)
                 self.hp = 0
             if self.direction == 0:
-                self.sprite.rect = self.sprite.rect.move(self.speed, 0)
+                self.sprite.rect = self.sprite.rect.move(self.speed / get_fps() * 30, 0)
             else:
-                self.sprite.rect = self.sprite.rect.move(0, self.speed * self.direction)
+                self.sprite.rect = self.sprite.rect.move(0, self.speed * self.direction / get_fps() * 30)
         else:
             self.sprite.kill()
             for i in board.enemies:
@@ -630,12 +646,14 @@ class Sprite:
 
 def start():
     global screen, need_to_render, all_sprites
+    clock = pygame.time.Clock()
     need_to_render = False
     temporary_xy = list(map(int, input("Кол-во клеток, x; y\n").split()))
     game_map = Board(temporary_xy[0], temporary_xy[1])
     pygame.init()
     screen = pygame.display.set_mode(get_resolution())
     running = True
+    fps = get_fps()
     board_update(game_map, screen)
     start_pos = game_map.enemies_spawn
     while running:
@@ -658,6 +676,7 @@ def start():
                     for ii in j:
                         if ii.__class__ == Base_Enemy:
                             ii.move(game_map)
+        clock.tick(fps)
         board_update(game_map, screen)
         layout.show(screen)
         layout2.show(screen)
@@ -666,5 +685,6 @@ def start():
 
 
 def board_update(game_map: Board, screen_to_render):
+    game_map.board[game_map.finish_pos[0]][game_map.finish_pos[1]] = 8
     game_map.render()
     all_sprites.draw(screen_to_render)
