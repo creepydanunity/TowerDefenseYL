@@ -478,6 +478,7 @@ class Base_Enemy:
         pos = [pos[0], pos[1]]
         self.hp, self.speed, self.defense, self.pos, self.dmg = hp, speed, defense, pos, dmg
         self.prev_pos = pos
+        self.start_hp = hp
         self.direction = 0
         self.image = pygame.image.load(img)
         self.sprite = pygame.sprite.Sprite(all_sprites)
@@ -491,6 +492,19 @@ class Base_Enemy:
                                                  board.cell_size[0] // 2 - board.cell_size[0] // 6, \
                                                  board.top + start_pos[0] * board.cell_size[1] + \
                                                  board.cell_size[1] // 2 - board.cell_size[1] // 6
+
+    def draw_health_bar(self, board: Board):
+        global screen
+        if self.hp > 0.75 * self.start_hp:
+            health_bar_color = pygame.Color(0, 255, 0)
+        elif self.hp > 0.5 * self.start_hp:
+            health_bar_color = pygame.Color(255, 255, 0)
+        else:
+            health_bar_color = pygame.Color(255, 0, 0)
+        pygame.draw.rect(screen, health_bar_color, (self.sprite.rect.x + board.cell_size[0] // 42,
+                                                    self.sprite.rect.y - 20,
+                                                    board.cell_size[0] // 3.5 * (self.hp / self.start_hp),
+                                                    board.cell_size[1] // 9))
 
     def do_you_know_the_way(self, board: Board, direction):
         y = self.pos[0]
@@ -560,6 +574,9 @@ class Base_Enemy:
             elif self.direction == 0:
                 self.direction = -1
 
+    def take_damage(self, dmg, lvl):
+        self.hp = int(round(self.hp - (dmg * (1 + lvl / 10)) * (1 - (self.defense + lvl / 80))))
+
     def move(self, board: Board):
         if self.hp > 0:
             x = (self.sprite.rect.x - board.left - board.cell_size[0] / 2 +
@@ -600,7 +617,7 @@ class Base_Enemy:
 
 
 class Base_Tower:
-    def __init__(self, board_position, board, dmg=10, reload=2, shot_distance=2, projectile_speed=0., level=1,
+    def __init__(self, board_position, board, dmg=10, reload=2, shot_distance=2, projectile_speed=0.,
                  img='Sprites/tb_1.png'):
         """
         :param dmg: Базовый урон башни
@@ -613,7 +630,6 @@ class Base_Tower:
         self.RLD = reload
         self.S_DIS = shot_distance
         self.board_pos = board_position
-        self.LVL = level
         self.img = img
         self.reloading = False
         self.tower_draw(board)
@@ -632,6 +648,7 @@ class Base_Tower:
         self.reloading = False
 
     def attack(self, board: Board, enemies: list):
+        global level
         if self.reloading is False:
             for e in enemies:
                 if e.hp <= 0:
@@ -646,7 +663,7 @@ class Base_Tower:
                         if self.reloading is False:
                             temp_pos = (self.board_pos[0] + j, self.board_pos[1] + i)
                             if e.pos[0] == temp_pos[0] and e.pos[1] == temp_pos[1]:
-                                e.hp -= self.ATK
+                                e.take_damage(self.ATK, level)
                                 self.reloading = True
                                 t = Timer(self.RLD, self.reload)
                                 t.start()
@@ -681,17 +698,18 @@ def spawn(*args):
     counter = 0
 
     def spawn_enemy():
-        global counter, game_map
+        global counter, game_map, level
         if counter <= level:
-            ct = Timer(0.85, spawn_enemy)
+            ct = Timer(1.25, spawn_enemy)
             ct.start()
             counter += 1
-        temp_enemy = Base_Enemy(game_map.enemies_spawn, game_map.enemies_spawn, game_map)
+        temp_enemy = Base_Enemy(game_map.enemies_spawn, game_map.enemies_spawn, game_map, hp=int(10 * (1 + level / 10)))
         if game_map.enemies[game_map.enemies_spawn[0]][game_map.enemies_spawn[1]] == 1:
             game_map.enemies[game_map.enemies_spawn[0]][game_map.enemies_spawn[1]] = [temp_enemy]
         else:
             game_map.enemies[game_map.enemies_spawn[0]][game_map.enemies_spawn[1]].append(temp_enemy)
 
+    level += 1
     spawn_enemy()
     t = Timer(30, spawn, args=[game_map])
     t.start()
@@ -699,14 +717,15 @@ def spawn(*args):
 
 def start():
     global screen, need_to_render, all_sprites, level
-    clock, level, need_to_render, screen, running, fps, tower_types = pygame.time.Clock(), 5, False, \
-                                                         pygame.display.set_mode(get_resolution()), True, get_fps(), \
-                                                                      [Base_Tower, arrow_tower]
+    clock, level, need_to_render, screen, running, fps, tower_types, level = pygame.time.Clock(), 5, False, \
+                                                                             pygame.display.set_mode(
+                                                                                 get_resolution()), True, get_fps(), \
+                                                                             [Base_Tower, arrow_tower], 2
     temporary_xy = list(map(int, input("Кол-во клеток, x; y\n").split()))
-    game_map = Board(temporary_xy[0], temporary_xy[1])
+    game_board = Board(temporary_xy[0], temporary_xy[1])
     pygame.init()
-    board_update(game_map, screen)
-    t = Timer(5, spawn, args=[game_map])
+    board_update(game_board, screen)
+    t = Timer(5, spawn, args=[game_board])
     t.start()
     enemies = []
     while running:
@@ -717,29 +736,31 @@ def start():
             if event.type == pygame.MOUSEBUTTONUP:
                 btn.get_clicked(event.pos)
                 btn2l.get_clicked(event.pos)
-                game_map.get_click(event.pos)
-        for i in game_map.enemies:
+                game_board.get_click(event.pos)
+        for i in game_board.enemies:
             for j in i:
                 if j.__class__ == list:
                     for ii in j:
                         if ii.__class__ == Base_Enemy:
                             if ii.hp > 0:
                                 enemies.append(ii)
-                            ii.move(game_map)
-        for i in game_map.to_draw:
+                                ii.draw_health_bar(game_board)
+                            ii.move(game_board)
+        pygame.display.flip()
+        for i in game_board.to_draw:
             for j in i:
                 if j.__class__ in tower_types:
-                    j.attack(game_map, enemies)
+                    j.attack(game_board, enemies)
         enemies = []
         clock.tick(fps)
-        board_update(game_map, screen)
+        board_update(game_board, screen)
         layout.show(screen)
         layout2.show(screen)
 
     pygame.quit()
 
 
-def board_update(game_map: Board, screen_to_render):
-    game_map.board[game_map.finish_pos[0]][game_map.finish_pos[1]] = 8
-    game_map.render()
+def board_update(game_board_temp: Board, screen_to_render):
+    game_board_temp.board[game_board_temp.finish_pos[0]][game_board_temp.finish_pos[1]] = 8
+    game_board_temp.render()
     all_sprites.draw(screen_to_render)
