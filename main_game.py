@@ -630,7 +630,6 @@ class Base_Tower:
 
     def reload(self):
         self.reloading = False
-        print('reloaded')
 
     def attack(self, board: Board, enemies: list):
         if self.reloading is False:
@@ -648,7 +647,6 @@ class Base_Tower:
                             temp_pos = (self.board_pos[0] + j, self.board_pos[1] + i)
                             if e.pos[0] == temp_pos[0] and e.pos[1] == temp_pos[1]:
                                 e.hp -= self.ATK
-                                print('ATTACKED, hp: ', e.hp)
                                 self.reloading = True
                                 t = Timer(self.RLD, self.reload)
                                 t.start()
