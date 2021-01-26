@@ -2,6 +2,7 @@ import pygame
 from menu_exemplars import layout, layout2, btn, btn2l
 from settings import get_resolution, get_fps
 from random import randint, choice
+from threading import Timer
 import copy
 
 all_sprites, picked_Tower, is_picked, cell_size_a = pygame.sprite.Group(), -1, False, (0, 0)
@@ -506,7 +507,6 @@ class Base_Enemy:
         return False
 
     def chose_direction(self, board: Board):
-        print(self.used_fork)
         if board.board[self.pos[0]][self.pos[1] + 1] == 8:
             self.direction = 0
         elif self.pos[1] == board.finish_pos[1]:
@@ -600,7 +600,7 @@ class Base_Enemy:
 
 
 class Base_Tower:
-    def __init__(self, board_position, board, dmg=10, reload=1, shot_distance=2, projectile_speed=0.5, level=1,
+    def __init__(self, board_position, board, dmg=10, reload=2, shot_distance=2, projectile_speed=0., level=1,
                  img='Sprites/tb_1.png'):
         """
         :param dmg: Базовый урон башни
@@ -615,6 +615,7 @@ class Base_Tower:
         self.board_pos = board_position
         self.LVL = level
         self.img = img
+        self.reloading = False
         self.tower_draw(board)
 
     def tower_draw(self, board: Board):
@@ -626,6 +627,38 @@ class Base_Tower:
         sprite.rect.x = board.cell_size[0] * self.board_pos[1] + board.left
         sprite.rect.y = board.cell_size[1] * self.board_pos[0] + board.top
         all_sprites.add(sprite)
+
+    def reload(self):
+        self.reloading = False
+        print('reloaded')
+
+    def attack(self, board: Board, enemies: list):
+        if self.reloading is False:
+            for e in enemies:
+                if e.hp <= 0:
+                    e.sprite.kill()
+                    for i in board.enemies:
+                        if i == self:
+                            i.remove(object=self)
+                    enemies.remove(e)
+                    continue
+                for i in range(-self.S_DIS, self.S_DIS + 1):
+                    for j in range(-self.S_DIS, self.S_DIS + 1):
+                        if self.reloading is False:
+                            temp_pos = (self.board_pos[0] + j, self.board_pos[1] + i)
+                            if e.pos[0] == temp_pos[0] and e.pos[1] == temp_pos[1]:
+                                e.hp -= self.ATK
+                                print('ATTACKED, hp: ', e.hp)
+                                self.reloading = True
+                                t = Timer(self.RLD, self.reload)
+                                t.start()
+                        else:
+                            break
+
+
+class arrow_tower(Base_Tower):
+    def __init__(self, board_position, board):
+        super().__init__(board_position, board)
 
 
 class Sprite:
@@ -644,18 +677,40 @@ class Sprite:
         all_sprites.add(sprite)
 
 
+def spawn(*args):
+    global level, counter, game_map
+    game_map = args[0]
+    counter = 0
+
+    def spawn_enemy():
+        global counter, game_map
+        if counter <= level:
+            ct = Timer(0.85, spawn_enemy)
+            ct.start()
+            counter += 1
+        temp_enemy = Base_Enemy(game_map.enemies_spawn, game_map.enemies_spawn, game_map)
+        if game_map.enemies[game_map.enemies_spawn[0]][game_map.enemies_spawn[1]] == 1:
+            game_map.enemies[game_map.enemies_spawn[0]][game_map.enemies_spawn[1]] = [temp_enemy]
+        else:
+            game_map.enemies[game_map.enemies_spawn[0]][game_map.enemies_spawn[1]].append(temp_enemy)
+
+    spawn_enemy()
+    t = Timer(30, spawn, args=[game_map])
+    t.start()
+
+
 def start():
-    global screen, need_to_render, all_sprites
-    clock = pygame.time.Clock()
-    need_to_render = False
+    global screen, need_to_render, all_sprites, level
+    clock, level, need_to_render, screen, running, fps, tower_types = pygame.time.Clock(), 5, False, \
+                                                         pygame.display.set_mode(get_resolution()), True, get_fps(), \
+                                                                      [Base_Tower, arrow_tower]
     temporary_xy = list(map(int, input("Кол-во клеток, x; y\n").split()))
     game_map = Board(temporary_xy[0], temporary_xy[1])
     pygame.init()
-    screen = pygame.display.set_mode(get_resolution())
-    running = True
-    fps = get_fps()
     board_update(game_map, screen)
-    start_pos = game_map.enemies_spawn
+    t = Timer(5, spawn, args=[game_map])
+    t.start()
+    enemies = []
     while running:
         pygame.display.flip()
         for event in pygame.event.get():
@@ -664,18 +719,20 @@ def start():
             if event.type == pygame.MOUSEBUTTONUP:
                 btn.get_clicked(event.pos)
                 btn2l.get_clicked(event.pos)
-                t = Base_Enemy(start_pos, start_pos, game_map)
-                if game_map.enemies[start_pos[0]][start_pos[1]] == 1:
-                    game_map.enemies[start_pos[0]][start_pos[1]] = [t]
-                else:
-                    game_map.enemies[start_pos[0]][start_pos[1]].append(t)
                 game_map.get_click(event.pos)
         for i in game_map.enemies:
             for j in i:
                 if j.__class__ == list:
                     for ii in j:
                         if ii.__class__ == Base_Enemy:
+                            if ii.hp > 0:
+                                enemies.append(ii)
                             ii.move(game_map)
+        for i in game_map.to_draw:
+            for j in i:
+                if j.__class__ in tower_types:
+                    j.attack(game_map, enemies)
+        enemies = []
         clock.tick(fps)
         board_update(game_map, screen)
         layout.show(screen)
