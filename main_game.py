@@ -1,11 +1,11 @@
 import pygame
-from menu_exemplars import layout, layout2, btn, btn2l
+from menu_exemplars import layout, layout2, btn, btn2l, lbl4, lbl3, lbl2, lbl1
 from settings import get_resolution, get_fps
 from random import randint, choice
 from threading import Timer
 import copy
 
-all_sprites, picked_Tower, is_picked, cell_size_a = pygame.sprite.Group(), -1, False, (0, 0)
+all_sprites, picked_Tower, is_picked, cell_size_a, score, balance = pygame.sprite.Group(), -1, False, (0, 0), 0, 15
 
 
 class Board:
@@ -603,7 +603,8 @@ class Base_Enemy:
                       board.cell_size[1] // 6 + board.cell_size[1] // 2)
                      // board.cell_size[1] // board.cell_size[1], x) == board.finish_pos:
                 board.hp -= self.dmg
-                print(board.hp)
+                lbl4.text = ("ХП:\n" + str(board.hp)).split('\n')
+                lbl4.calculation()
                 self.hp = 0
             if self.direction == 0:
                 self.sprite.rect = self.sprite.rect.move(self.speed / get_fps() * 30, 0)
@@ -696,6 +697,10 @@ def spawn(*args):
     global level, counter, game_map
     game_map = args[0]
     counter = 0
+    lbl3.text = ("Враги на\nсл волне:\n" + str(level + 4)).split('\n')
+    lbl3.calculation()
+    lbl2.text = ("Волна:\n" + str(level - 1)).split('\n')
+    lbl2.calculation()
 
     def spawn_enemy():
         global counter, game_map, level
@@ -716,7 +721,7 @@ def spawn(*args):
 
 
 def start():
-    global screen, need_to_render, all_sprites, level
+    global screen, need_to_render, all_sprites, level, balance
     clock, level, need_to_render, screen, running, fps, tower_types, level = pygame.time.Clock(), 5, False, \
                                                                              pygame.display.set_mode(
                                                                                  get_resolution()), True, get_fps(), \
@@ -728,7 +733,11 @@ def start():
     t = Timer(5, spawn, args=[game_board])
     t.start()
     enemies = []
+    lbl4.text = "ХП:\n50".split('\n')
+    lbl4.calculation()
     while running:
+        lbl1.text = f"Валюта:\n{balance} $".split('\n')
+        lbl1.calculation()
         pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

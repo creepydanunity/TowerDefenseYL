@@ -2,7 +2,6 @@ from Menu import *
 from settings import get_resolution
 import main_game as mg
 
-
 BUTTON_BACKGROUND_COLOR = "#737373"
 BUTTON_TOWERS_BACKGROUND_COLOR = "#8c8c8c"
 LABEL_BACKGROUND_COLOR = '#a6a6a6'
@@ -49,13 +48,13 @@ btn5 = MenuButton(0, 0, 0, 0, color=BUTTON_BACKGROUND_COLOR, text="Купить"
 lbl1 = MenuLabel(0, 0, 0, 0, color=LABEL_BACKGROUND_COLOR, text="Валюта:\nx $", text_color=TEXT_COLOR,
                  text_size=TEXT_SIZE,
                  indent=LABEL_INDENT)
-lbl2 = MenuLabel(0, 0, 0, 0, color=LABEL_BACKGROUND_COLOR, text="Волна:\nx / 25", text_color=TEXT_COLOR,
+lbl2 = MenuLabel(0, 0, 0, 0, color=LABEL_BACKGROUND_COLOR, text="Волна:\n1", text_color=TEXT_COLOR,
                  text_size=TEXT_SIZE,
                  indent=LABEL_INDENT)
-lbl3 = MenuLabel(0, 0, 0, 0, color=LABEL_BACKGROUND_COLOR, text="Враги на\nсл волне:\n0", text_color=TEXT_COLOR,
+lbl3 = MenuLabel(0, 0, 0, 0, color=LABEL_BACKGROUND_COLOR, text="Враги на\nсл волне:\n5", text_color=TEXT_COLOR,
                  text_size=TEXT_SIZE,
                  indent=LABEL_INDENT)
-lbl4 = MenuLabel(0, 0, 0, 0, color=LABEL_BACKGROUND_COLOR, text="ХП:\n50 %", text_color=TEXT_COLOR, text_size=TEXT_SIZE,
+lbl4 = MenuLabel(0, 0, 0, 0, color=LABEL_BACKGROUND_COLOR, text="ХП:\n50", text_color=TEXT_COLOR, text_size=TEXT_SIZE,
                  indent=LABEL_INDENT)
 lb = []
 for x in range(1, 4):
@@ -88,9 +87,10 @@ for x in range(1, 10):
             MenuButton(0, 0, 0, 0, color=BUTTON_BACKGROUND_COLOR, text=">", text_color=TEXT_COLOR, text_size=50)
         )
     else:
-        lb2.append(
-            MenuButton(0, 0, 0, 0, func=tower_test, args=[x + 8, True], color=BUTTON_TOWERS_BACKGROUND_COLOR, text_color=TEXT_COLOR,
-                       text=f"Башня {x - 2} | {(x - 2) * 10 - 3} $", text_size=TEXT_SIZE))
+        temp = MenuButton(0, 0, 0, 0, func=tower_test, args=[x + 8, True], color=BUTTON_TOWERS_BACKGROUND_COLOR,
+                          text_color=TEXT_COLOR,
+                          text=f"Башня {x - 2} | {(x - 2) * 10 - 3} $", text_size=TEXT_SIZE)
+        lb2.append(temp)
 btn2l = MenuButtonList(lb2)
 
 w1, h1 = w, h = get_resolution()
