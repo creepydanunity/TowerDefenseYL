@@ -1,11 +1,14 @@
 import pygame
-from menu_exemplars import layout, layout2, btn, btn2l, lbl4, lbl3, lbl2, lbl1
-from settings import get_resolution, get_fps
+import sys
+from PyQt5.QtWidgets import QMessageBox
+from menu_examples import layout, layout2, btn, pause_mbl, health_ml, enemies_ml, wave_ml, money_ml
+from settings import get_resolution, get_fps, setup_settings_ui
 from random import randint, choice
 from threading import Timer
 import copy
 
-all_sprites, picked_Tower, is_picked, cell_size_a, score, balance = pygame.sprite.Group(), -1, False, (0, 0), 0, 15
+all_sprites, picked_Tower, cell_size_a, score, balance = pygame.sprite.Group(), -1, (0, 0), 0, 0
+pause, pause_lock, tower_pool, dt = True, False, [], 0
 
 
 class Board:
@@ -104,7 +107,7 @@ class Board:
                             Rate_book[(row, column)] = ((cell_in_line_counter / self.size) * gip, near)
 
             if len(Rate_book.keys()) / (self.width * self.height) > self.const_space or len(Rate_book.keys()) == 0:
-                print('No, there is too much free space, LoL. I`ll try again.')
+                print('Too much free space.')
                 self.const_space += 0.02
                 self.generate_way()
             else:
@@ -278,7 +281,7 @@ class Board:
                                             Sprite(img="Sprites/dirt_clear.png",
                                                    pos=(current_pos[0], current_pos[1]), board=self)
                                     except IndexError:
-                                        print('[!] Ignored error - IndexError. LoL =D')
+                                        print('[!] Ignored error - IndexError.')
                                         break
                             temp, cell_found = minimum_distance[1][1] + 1, False
                             while temp < self.width - 1:
@@ -456,13 +459,12 @@ class Board:
                         self.to_draw[i][j].sprite_draw(self)
 
     def on_click(self, cell):
-        global is_picked, need_to_draw
+        global need_to_draw
         need_to_draw = True
-        if is_picked and self.board[cell[1]][cell[0]] == 1 and \
+        if tower_pool and self.board[cell[1]][cell[0]] == 1 and \
                 0 < cell[1] < self.height and 2 < cell[0] < self.width - 1:
             self.to_draw[cell[1]][cell[0]] = Base_Tower(cell[::-1], self)
-            self.board[cell[1]][cell[0]] = picked_Tower
-            is_picked = False
+            self.board[cell[1]][cell[0]] = tower_pool.pop()
 
     def get_click(self, event_pos):
         global need_to_render
@@ -473,10 +475,10 @@ class Board:
 
 
 class Base_Enemy:
-    def __init__(self, pos, start_pos, board: Board, hp=10, speed=5, defense=0.1, dmg=1, img='Sprites/enemy.png'):
+    def __init__(self, pos, start_pos, board: Board, hp=10, speed=0.07, defense=0.1, dmg=1, img='Sprites/enemy.png'):
         global all_sprites
         pos = [pos[0], pos[1]]
-        self.hp, self.speed, self.defense, self.pos, self.dmg = hp, speed, defense, pos, dmg
+        self.hp, self.speed, self.defense, self.pos, self.dmg = hp * level * 0.5, speed, defense, pos, dmg
         self.prev_pos = pos
         self.start_hp = hp
         self.direction = 0
@@ -503,7 +505,7 @@ class Base_Enemy:
             health_bar_color = pygame.Color(255, 0, 0)
         pygame.draw.rect(screen, health_bar_color, (self.sprite.rect.x + board.cell_size[0] // 42,
                                                     self.sprite.rect.y - 20,
-                                                    board.cell_size[0] // 3.5 * (self.hp / self.start_hp),
+                                                    board.cell_size[0] // 3,
                                                     board.cell_size[1] // 9))
 
     def do_you_know_the_way(self, board: Board, direction):
@@ -603,13 +605,17 @@ class Base_Enemy:
                       board.cell_size[1] // 6 + board.cell_size[1] // 2)
                      // board.cell_size[1] // board.cell_size[1], x) == board.finish_pos:
                 board.hp -= self.dmg
-                lbl4.text = ("ХП:\n" + str(board.hp)).split('\n')
-                lbl4.calculation()
+                if board.hp <= 0:
+                    game_over()
+                    return
+                health_ml.text = ("ХП:\n" + str(board.hp)).split('\n')
+                health_ml.calculation()
                 self.hp = 0
             if self.direction == 0:
-                self.sprite.rect = self.sprite.rect.move(self.speed / get_fps() * 30, 0)
+                self.sprite.rect = self.sprite.rect.move(self.speed * dt, 0)
+                self.sprite.rect = self.sprite.rect.move(self.speed * dt, 0)
             else:
-                self.sprite.rect = self.sprite.rect.move(0, self.speed * self.direction / get_fps() * 30)
+                self.sprite.rect = self.sprite.rect.move(0, self.speed * self.direction * dt)
         else:
             self.sprite.kill()
             for i in board.enemies:
@@ -693,14 +699,37 @@ class Sprite:
         all_sprites.add(sprite)
 
 
+def set_pause(status=False):
+    global pause
+
+    if not pause_lock:
+        pause = status
+
+
+def buy_tower():
+    global balance, tower_pool
+
+    price = (picked_Tower - 9) * 10 - 3
+
+    if price < 0:
+        return
+
+    if balance >= price:
+        tower_pool.append(picked_Tower)
+        balance -= price
+
+
 def spawn(*args):
-    global level, counter, game_map
+    global level, counter, game_map, balance
+
     game_map = args[0]
     counter = 0
-    lbl3.text = ("Враги на\nсл волне:\n" + str(level + 4)).split('\n')
-    lbl3.calculation()
-    lbl2.text = ("Волна:\n" + str(level - 1)).split('\n')
-    lbl2.calculation()
+    enemies_ml.text = ("Враги на\nсл волне:\n" + str(level + 4)).split('\n')
+    enemies_ml.calculation()
+    wave_ml.text = ("Волна:\n" + str(level - 1)).split('\n')
+    add_score_points(129 * level + balance)
+    balance += int(level * 12)
+    wave_ml.calculation()
 
     def spawn_enemy():
         global counter, game_map, level
@@ -721,55 +750,90 @@ def spawn(*args):
 
 
 def start():
-    global screen, need_to_render, all_sprites, level, balance
+    global screen, need_to_render, all_sprites, level, balance, dt
+
+    app = setup_settings_ui()
     clock, level, need_to_render, screen, running, fps, tower_types, level = pygame.time.Clock(), 5, False, \
                                                                              pygame.display.set_mode(
                                                                                  get_resolution()), True, get_fps(), \
                                                                              [Base_Tower, arrow_tower], 2
-    temporary_xy = list(map(int, input("Кол-во клеток, x; y\n").split()))
+    temporary_xy = (14, 16)
     game_board = Board(temporary_xy[0], temporary_xy[1])
     pygame.init()
     board_update(game_board, screen)
     t = Timer(5, spawn, args=[game_board])
     t.start()
     enemies = []
-    lbl4.text = "ХП:\n50".split('\n')
-    lbl4.calculation()
+    health_ml.text = "ХП:\n50".split('\n')
+    health_ml.calculation()
+    pygame.display.flip()
+    lap = 0
+
     while running:
-        lbl1.text = f"Валюта:\n{balance} $".split('\n')
-        lbl1.calculation()
+        money_ml.text = f"Валюта:\n{balance} $".split('\n')
+        money_ml.calculation()
         pygame.display.flip()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONUP:
                 btn.get_clicked(event.pos)
-                btn2l.get_clicked(event.pos)
+                pause_mbl.get_clicked(event.pos)
                 game_board.get_click(event.pos)
-        for i in game_board.enemies:
-            for j in i:
-                if j.__class__ == list:
-                    for ii in j:
-                        if ii.__class__ == Base_Enemy:
-                            if ii.hp > 0:
-                                enemies.append(ii)
-                                ii.draw_health_bar(game_board)
-                            ii.move(game_board)
-        pygame.display.flip()
-        for i in game_board.to_draw:
-            for j in i:
-                if j.__class__ in tower_types:
-                    j.attack(game_board, enemies)
-        enemies = []
-        clock.tick(fps)
+
+        if lap >= 2 and not pause:
+            for i in game_board.enemies:
+                for j in i:
+                    if j.__class__ == list:
+                        for ii in j:
+                            if ii.__class__ == Base_Enemy:
+                                if ii.hp > 0:
+                                    enemies.append(ii)
+                                    ii.draw_health_bar(game_board)
+                                ii.move(game_board)
+            pygame.display.flip()
+            for i in game_board.to_draw:
+                for j in i:
+                    if j.__class__ in tower_types:
+                        j.attack(game_board, enemies)
+            enemies = []
+
+        dt = clock.tick(fps)
         board_update(game_board, screen)
         layout.show(screen)
         layout2.show(screen)
 
+        lap += 1
+
     pygame.quit()
+    sys.exit(app.exec_())
 
 
 def board_update(game_board_temp: Board, screen_to_render):
     game_board_temp.board[game_board_temp.finish_pos[0]][game_board_temp.finish_pos[1]] = 8
     game_board_temp.render()
     all_sprites.draw(screen_to_render)
+
+
+def add_score_points(points):
+    global score
+
+    score += points
+
+
+def game_over():
+    global pause, pause_lock, running
+
+    pause, pause_lock = True, True
+
+    notification = QMessageBox()
+    notification.setWindowTitle('Матч окончен')
+    notification.setText(f'Ваш результат - {score}, спасибо за игру!')
+    notification.setStandardButtons(QMessageBox.Ok)
+    notification = notification.exec()
+
+    if notification == QMessageBox.Ok:
+        pass
+
+    running = False

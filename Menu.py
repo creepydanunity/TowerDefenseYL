@@ -291,7 +291,7 @@ class MenuLabelList(list):
         return self.li
 
 
-class MenuLayOut(object):
+class MenuLayout(object):
 
     def __init__(self, mbl: MenuButtonList, mll: MenuLabelList, place: list, x: int, y: int, w: int, h: int,
                  indent=(10, 10), color="#999999", orientation='v') -> None:
